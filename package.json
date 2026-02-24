@@ -1,0 +1,10 @@
+{
+  "name": "hubfutebol",
+  "private": true,
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "dev": "pnpm --filter hubfutebol-web dev",
+    "build": "pnpm --filter hubfutebol-web build",
+    "start": "pnpm --filter hubfutebol-web start"
+  }
+}
