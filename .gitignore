@@ -22,3 +22,7 @@ apps/api/.env*
 apps/api/alembic/versions/*.pyc
 postgres-data/
 
+
+# local backups
+.env.bak.*
+docker-compose.yml.bak.*

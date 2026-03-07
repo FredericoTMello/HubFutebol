@@ -1,0 +1,52 @@
+name: Deploy HubFutebol
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: hubfutebol-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, x64, hubfutebol]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show commit
+        run: |
+          echo "Deploying commit: $GITHUB_SHA"
+          git rev-parse --short HEAD
+
+      - name: Sync repo to pushed commit
+        run: |
+          cd /home/frederico/HubFutebol
+          git fetch --all --prune
+          git reset --hard "$GITHUB_SHA"
+
+      - name: Docker compose config
+        run: |
+          cd /home/frederico/HubFutebol
+          docker compose config >/tmp/hubfutebol-compose-rendered.yml
+          tail -n 20 /tmp/hubfutebol-compose-rendered.yml || true
+
+      - name: Rebuild and restart
+        run: |
+          cd /home/frederico/HubFutebol
+          docker compose up -d --build
+
+      - name: Wait for app
+        run: sleep 8
+
+      - name: Health check local
+        run: |
+          curl -fI http://127.0.0.1:8080
+
+      - name: Health check tailnet
+        run: |
+          curl -fkI https://servidor-openclaw.tail5ef8ad.ts.net
