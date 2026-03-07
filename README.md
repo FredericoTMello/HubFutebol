@@ -1,161 +1,105 @@
-# HubFutebol MVP
+# HubFutebol
 
-MVP mobile-first para microcampeonatos de pelada (grupos fechados), com frontend em Next.js e backend em FastAPI.
+HubFutebol e um MVP mobile-first para organizar peladas e microcampeonatos em grupos fechados. O fluxo principal foi desenhado para uso rapido no celular: entrar no grupo, confirmar presenca, travar a rodada, gerar times e atualizar o ranking.
 
-## Estado atual (local)
+## Estado atual
 
-- Frontend online em `http://127.0.0.1:3000`
-- API online em `http://127.0.0.1:8000`
-- Healthcheck: `GET /health`
-- Seed demo gerada para teste
-
-### Credenciais demo
-
-- Email: `demo@hubfutebol.dev`
-- Senha: `123456`
-- Codigo de convite: `demo123`
-
-## Ambientes e .env
-
-- `./.env`: Docker/Compose (Postgres)
-- `./.env.example`: exemplo base para Docker/Compose
-- `apps/api/.env`: ambiente local atual (teste rapido; SQLite)
-- `apps/web/.env.local`: URL da API no frontend local
-
-## Retomar amanha (rapido)
-
-1. Testar `http://127.0.0.1:8000/health` e `http://127.0.0.1:3000`.
-2. Se precisar subir manualmente:
-   `apps/api`: `.\.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000`
-   `apps/web`: `corepack pnpm dev`
-3. Login demo -> entrar com codigo `demo123` -> testar fluxo `round / admin / ranking`.
-4. Para deploy real, usar Postgres (Docker Compose) em vez do SQLite local.
-
-## Observacoes importantes
-
-- CORS local configurado para `localhost` e `127.0.0.1`.
-- Validado localmente: migration, seed demo e `next build`.
+- Monorepo com `apps/web` e `apps/api`
+- Frontend em Next.js com App Router
+- Backend em FastAPI com SQLAlchemy, Alembic e JWT
+- Infra versionada com Docker Compose, Postgres e Nginx
+- Deploy automatico em servidor Hetzner por GitHub Actions + self-hosted runner
+- Infra suficiente para um piloto pequeno; monitoramento e rotinas extras de servidor sao externos ao repositorio
 
 ## Estrutura
 
-- `apps/web`: Next.js App Router + TypeScript + Tailwind + TanStack Query + RHF + Zod + PWA
-- `apps/api`: FastAPI + PostgreSQL + SQLAlchemy + Alembic + JWT
-- `infra/nginx`: reverse proxy para `web` e `api`
-
-## Comandos (dev)
-
-### Backend
-
-```bash
-cd apps/api
-python -m venv .venv
-. .venv/bin/activate  # Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+```text
+.
+|-- apps/
+|   |-- api/
+|   `-- web/
+|-- infra/
+|   `-- nginx/
+|-- docker-compose.yml
+|-- README.md
+|-- README_OPERACIONAL.md
+|-- FUNCIONALIDADES.md
+|-- instrucao2.md
+`-- instrucoes.md
 ```
 
-### Frontend
+## Documentacao
 
-```bash
-cd apps/web
-pnpm install
-# se estiver rodando o back em http://localhost:8000, use:
-# NEXT_PUBLIC_API_URL=http://localhost:8000 pnpm dev
-pnpm dev
-```
+- `README.md`: visao geral, setup e fluxo de uso do repositorio
+- `README_OPERACIONAL.md`: runbook enxuto para a instancia em producao
+- `FUNCIONALIDADES.md`: regras de negocio, telas e limites atuais do MVP
+- `instrucao2.md`: guia interno atual para evolucao tecnica do projeto
+- `instrucoes.md`: briefing inicial que originou o MVP; manter apenas como historico
 
-## Comando (prod)
+## Rodar com Docker
+
+Este e o caminho mais simples para subir o projeto com paridade razoavel com producao.
+
+1. Crie o arquivo `.env` com base em `.env.example`.
+2. Rode:
 
 ```bash
 docker compose up -d --build
 ```
 
-## Exemplos de payloads (API)
+3. Acesse a aplicacao em `http://127.0.0.1:8080`
+4. Valide o healthcheck em `http://127.0.0.1:8080/api/health`
 
-### Register
+Observacao: no modo Docker, a API nao fica exposta diretamente na porta `8000` do host; o acesso passa pelo Nginx.
 
-`POST /api/auth/register`
+## Rodar em desenvolvimento
 
-```json
-{
-  "name": "Fred",
-  "email": "fred@example.com",
-  "password": "123456"
-}
+### API
+
+```bash
+cd apps/api
+python -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### Criar grupo
+No Windows PowerShell, a ativacao da virtualenv fica em:
 
-`POST /api/groups`
-
-```json
-{
-  "name": "Pelada da Quinta"
-}
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-### Confirmar presença
+### Web
 
-`POST /api/matchdays/1/attendance`
-
-```json
-{
-  "player_id": 3,
-  "status": "CONFIRMED"
-}
+```bash
+cd apps/web
+pnpm install
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000 pnpm dev
 ```
 
-### Lançar resultado
+No Windows PowerShell:
 
-`POST /api/matches/1/result`
-
-```json
-{
-  "home_score": 5,
-  "away_score": 4
-}
+```powershell
+$env:NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
+pnpm dev
 ```
 
-## Prints de rotas (exemplos)
+Com esse fluxo, o frontend roda em `http://127.0.0.1:3000` e a API em `http://127.0.0.1:8000`.
 
-### Standings (`GET /api/seasons/{id}/standings`)
+## Variaveis de ambiente
 
-```json
-{
-  "season_id": 1,
-  "items": [
-    {
-      "player_id": 3,
-      "player_name": "João",
-      "points": 7,
-      "wins": 2,
-      "draws": 1,
-      "losses": 0,
-      "no_shows": 0
-    }
-  ]
-}
-```
+- `./.env`: compose, Postgres e deploy
+- `./.env.example`: base para criar o `.env`
+- `apps/web/.env.local`: opcional para rodar o frontend fora do Docker
+- `apps/api/.env`: opcional para rodar a API fora do Docker
 
-### Player stats (`GET /api/seasons/{id}/player-stats`)
+O alvo principal do projeto e Postgres. O codigo ainda aceita SQLite para testes locais rapidos, mas nao e o caminho recomendado para deploy.
 
-```json
-{
-  "season_id": 1,
-  "items": [
-    {
-      "player_id": 3,
-      "goals": 4,
-      "appearances": 3
-    }
-  ]
-}
-```
+## Seed demo
 
-## Seed demo (opcional)
-
-Script em `apps/api/scripts/seed_demo.py`.
+O script de seed fica em `apps/api/scripts/seed_demo.py`.
 
 Exemplo:
 
@@ -165,214 +109,50 @@ alembic upgrade head
 python scripts/seed_demo.py
 ```
 
-## Parar servidores locais
+Credenciais demo:
 
-```powershell
-Stop-Process -Id <PID_API>,<PID_WEB>
-```
+- Email: `demo@hubfutebol.dev`
+- Senha: `123456`
+- Codigo de convite: `demo123`
 
-## Deploy automático ativo 🚀
+## API principal
 
-Este commit foi usado para testar o deploy automático via GitHub Actions + self-hosted runner no servidor Hetzner.
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /groups`
+- `GET /groups/{id}`
+- `POST /groups/{id}/invite`
+- `POST /groups/join`
+- `POST /groups/{id}/players`
+- `GET /groups/{id}/players`
+- `PATCH /players/{id}`
+- `POST /groups/{id}/seasons`
+- `POST /seasons/{id}/close`
+- `GET /seasons/{id}/standings`
+- `GET /seasons/{id}/player-stats`
+- `GET /seasons/{id}/matchdays`
+- `POST /seasons/{id}/matchdays`
+- `GET /matchdays/{id}`
+- `POST /matchdays/{id}/attendance`
+- `POST /matchdays/{id}/lock`
+- `POST /matchdays/{id}/matches`
+- `POST /matches/{id}/result`
+- `POST /groups/{id}/ledger/entries`
+- `GET /groups/{id}/ledger`
 
-## Deploy automático ativo 🚀
+## Deploy
 
-Este commit foi usado para testar o deploy automático via GitHub Actions + self-hosted runner no servidor Hetzner.
-# HubFutebol
-
-Sistema MVP para gestão de times e campeonatos de futebol amador.
-
-## Arquitetura
-
-O projeto roda em containers Docker com a seguinte estrutura:
-
-* **web** – Frontend Next.js
-* **api** – Backend FastAPI
-* **db** – PostgreSQL
-* **reverse-proxy** – Nginx
-* **uptime-kuma** – Monitoramento
-* **netdata** – Métricas do servidor
-
-## Infraestrutura
-
-Servidor: Hetzner
-Rede privada: Tailscale
-Orquestração: Docker Compose
-
-## Containers principais
-
-| Serviço       | Função           | Porta |
-| ------------- | ---------------- | ----- |
-| web           | Frontend Next.js | 3000  |
-| api           | Backend FastAPI  | 8000  |
-| db            | PostgreSQL       | 5432  |
-| reverse-proxy | Nginx            | 8080  |
-| uptime-kuma   | Monitoramento    | 3001  |
-| netdata       | Métricas         | 19999 |
-
-## Estrutura do projeto
-
-```
-HubFutebol
-├── apps
-│   ├── api
-│   └── web
-├── infra
-│   └── nginx
-├── docker-compose.yml
-```
-
-## Subindo o projeto
+- `push` para `main` dispara o workflow em `.github/workflows/deploy.yml`
+- O runner faz `git reset --hard`, `docker compose up -d --build` e healthcheck com rollback em caso de falha
+- Para manutencao manual local ou no servidor, o comando base continua sendo:
 
 ```bash
-git pull
-cd ~/HubFutebol
 docker compose up -d --build
 ```
 
-## Verificar containers
+## Observacoes
 
-```bash
-docker compose ps
-```
-
-## Logs
-
-```bash
-docker compose logs -f
-```
-
-## Backup automático do banco
-
-Backups rodam diariamente às 03:00.
-
-Script:
-
-```
-~/scripts/backup_hubfutebol_postgres.sh
-```
-
-Local dos backups:
-
-```
-~/backups/hubfutebol/postgres
-```
-
-Executar manualmente:
-
-```bash
-~/scripts/backup_hubfutebol_postgres.sh
-```
-
-## Monitoramento
-
-### Uptime Kuma
-
-Acesso via Tailscale:
-
-```
-http://100.83.83.44:3001
-```
-
-Monitor configurado para verificar o Nginx interno:
-
-```
-http://hubfutebol-reverse-proxy-1
-```
-
-### Netdata
-
-Dashboard:
-
-```
-http://100.83.83.44:19999
-```
-
-Mostra:
-
-* CPU
-* RAM
-* Docker containers
-* Rede
-* Disco
-
-## Atualização do sistema
-
-```bash
-cd ~/HubFutebol
-git pull
-docker compose up -d --build
-```
-
-## Reiniciar serviços
-
-```bash
-docker compose restart
-```
-
-## Reiniciar somente API
-
-```bash
-docker compose restart api
-```
-
-## Reiniciar Nginx
-
-```bash
-docker compose restart reverse-proxy
-```
-
-## Banco de dados
-
-Entrar no container:
-
-```bash
-docker compose exec db psql -U $POSTGRES_USER -d $POSTGRES_DB
-```
-
-## Health check rápido
-
-Testar Nginx:
-
-```bash
-curl -I http://localhost:8080
-```
-
-Testar API:
-
-```bash
-curl -I http://localhost:8000
-```
-
-## Redes Docker
-
-Rede principal do sistema:
-
-```
-hubfutebol_default
-```
-
-Containers conectados:
-
-* api
-* web
-* db
-* reverse-proxy
-* uptime-kuma
-
-## Segurança
-
-* acesso externo apenas via Tailscale
-* serviços internos não expostos publicamente
-
-## Próximos passos
-
-* autenticação de usuários
-* gestão de times
-* controle de pagamentos
-* criação de campeonatos
-* geração automática de tabela
-
----
-
-Projeto em desenvolvimento.
+- O healthcheck da API e `GET /health`
+- O Compose versionado cobre `db`, `api`, `web` e `reverse-proxy`
+- Monitoramento, backup e acessos administrativos do servidor existem fora do repositorio e devem ser tratados como operacao externa
+- Nao ha suite automatizada de testes no repositorio neste momento

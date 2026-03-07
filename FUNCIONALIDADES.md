@@ -1,239 +1,203 @@
-# Funcionalidades do HubFutebol (MVP)
+# Funcionalidades do HubFutebol
 
-Este documento descreve o que cada parte do aplicativo faz no MVP local.
+Este documento descreve o comportamento funcional do MVP no estado atual do repositorio.
 
-## Objetivo do app
+## Objetivo
 
-Organizar microcampeonatos de pelada em grupos fechados, com foco em uso pelo celular (link no WhatsApp).
+Organizar peladas e microcampeonatos em grupos fechados, com foco em uso rapido no navegador do celular.
 
 Fluxo principal:
 
 1. Entrar no grupo
 2. Confirmar presenca na rodada
-3. Ver lista de presencas
-4. Admin faz lock e gera times
-5. Admin lanca placar
-6. Ranking e stats atualizam
+3. Ver a lista de confirmacoes
+4. Travar a rodada
+5. Gerar os times
+6. Lancar o placar
+7. Atualizar ranking e estatisticas
 
 ## Perfis de acesso
 
-- `OWNER`: dono do grupo (controle total)
+- `OWNER`: dono do grupo
 - `ADMIN`: administrador do grupo
 - `MEMBER`: participante comum
 
-## O que cada perfil pode fazer
+## Permissoes por perfil
 
-### OWNER / ADMIN
+### OWNER e ADMIN
 
 - Criar temporada
-- Criar rodada (matchday)
-- Gerar convite (codigo/link)
-- Fazer lock da rodada
-- Gerar times automaticamente (A/B)
-- Lancar resultado da partida
+- Criar rodada
+- Gerar convite por codigo ou link
+- Travar a rodada
+- Gerar times automaticamente
+- Lancar resultado
 - Cadastrar e editar jogadores
-- Marcar presenca/no-show (via API e tela admin/rodada)
-- Ver ranking, stats, jogadores e rodada
+- Marcar presenca ou `NO_SHOW`
+- Consultar rodada, jogadores, ranking e area administrativa
 
 ### MEMBER
 
-- Entrar com codigo/link de convite
-- Confirmar presenca na rodada (somente no jogador vinculado ao proprio usuario)
+- Entrar em grupo por codigo ou link
+- Confirmar a propria presenca
 - Ver lista de presencas
 - Ver ranking
 - Ver jogadores
-- Ver area admin (mas sem permissao para executar acoes restritas)
+- Acessar a area administrativa sem executar acoes restritas
 
-## Telas do frontend (mobile-first)
+## Telas do frontend
 
-## `/`
+### `/`
 
-- Tela inicial com atalhos para:
-  - Login
-  - Cadastro
-  - Entrar com codigo
+- Entrada simples para login, cadastro e entrada por codigo
 
-## `/login`
+### `/login`
 
-- Autenticacao por email e senha
-- Salva sessao no navegador (token JWT + usuario)
-- Redireciona para `/join` apos login
+- Login por email e senha
+- Persistencia de sessao no navegador
+- Redirecionamento para `/join`
 
-## `/register`
+### `/register`
 
-- Cadastro de usuario (nome, email, senha)
-- Faz login automatico apos cadastro
-- Redireciona para `/join`
+- Cadastro com login automatico
+- Redirecionamento para `/join`
 
-## `/join`
+### `/join`
 
-- Entrar em grupo por codigo de convite
-- Aceita codigo digitado manualmente
-- Tambem aceita `?code=` na URL (link do WhatsApp)
-- Ao entrar com sucesso, redireciona para `/g/{groupId}/round`
+- Entrada em grupo por codigo de convite
+- Aceita codigo manual ou `?code=` na URL
+- Redireciona para `/g/{groupId}/round`
 
-## `/g/[groupId]/round` (Rodada atual)
+### `/g/[groupId]/round`
 
-- Mostra a rodada atual da temporada ativa
-- Exibe status da rodada (`ABERTA` / `LOCK`)
-- Formulario de presenca:
-  - escolher jogador
-  - definir status (`CONFIRMED`, `DECLINED`, `NO_SHOW`)
-- Lista de jogadores com status atual de presenca
-- Atualiza dados via TanStack Query
+- Exibe a rodada atual da temporada ativa
+- Mostra status da rodada
+- Permite confirmar ou atualizar presenca
+- Lista os jogadores com o status atual
 
-## `/g/[groupId]/ranking`
+### `/g/[groupId]/ranking`
 
-- Mostra tabela da temporada (pontos, W/D/L, no-show, jogos)
-- Mostra stats por jogador (gols, presencas, no-shows)
-- Dados vindos da API com cache/reload via TanStack Query
+- Mostra tabela da temporada
+- Mostra estatisticas por jogador
 
-## `/g/[groupId]/players`
+### `/g/[groupId]/players`
 
-- Lista jogadores do grupo (posicao, forca, ativo/inativo)
-- Admin/Owner podem:
-  - cadastrar novo jogador
-  - ativar/inativar jogador
-- Member pode visualizar
+- Lista jogadores do grupo
+- Permite cadastro e alteracao para `OWNER` e `ADMIN`
 
-## `/g/[groupId]/admin`
+### `/g/[groupId]/admin`
 
-- Painel de administracao do grupo
-- Funcoes:
-  - Gerar convite (codigo + link)
-  - Criar temporada (com regras de pontuacao)
-  - Criar rodada
-  - Fazer lock + gerar times (A/B)
-  - Ver composicao dos times gerados
-  - Lancar placar (Time A x Time B)
+- Gera convite
+- Cria temporada
+- Cria rodada
+- Faz lock da rodada
+- Gera times A/B
+- Exibe composicao dos times
+- Lanca placar
 
-## Navegacao
+## Regras de negocio
 
-- Bottom nav mobile:
-  - Rodada
-  - Ranking
-  - Jogadores
-  - Admin
+### Temporada
 
-## Regras de negocio (MVP)
+- Cada grupo pode ter uma temporada ativa por vez
+- A regra de pontuacao e configuravel por temporada
+- Valores padrao:
+  - vitoria = `3`
+  - empate = `1`
+  - derrota = `0`
+  - `NO_SHOW` = `-1`
 
-## Temporada e pontuacao
+### Rodada
 
-- Cada grupo pode ter uma temporada ativa
-- Regra de pontuacao configuravel por temporada:
-  - `W` (vitoria): padrao `3`
-  - `D` (empate): padrao `1`
-  - `L` (derrota): padrao `0`
-  - `NO_SHOW`: padrao `-1`
-- Penalidade aplica somente para `NO_SHOW`
+- A rodada comeca aberta para confirmacao
+- Quando o admin faz lock, a rodada e travada
+- O lock gera dois times e uma partida
 
-## Rodada (MatchDay)
+### Geracao de times
 
-- Rodada pode ficar aberta para confirmacao de presenca
-- Quando admin faz `lock`, a rodada e travada
-- O lock gera automaticamente:
-  - `2 times` (Time A e Time B)
-  - `1 partida` (A x B)
+- Considera apenas jogadores com status `CONFIRMED`
+- Tenta balancear por posicao e `skill_rating`
 
-## Geracao de times
+### Resultado
 
-- Usa jogadores com presenca `CONFIRMED`
-- Tenta balancear por:
-  - posicao (quando informada)
-  - `skill_rating` (forca)
-- Resultado gera `Time A` e `Time B` com soma de forca
+- O placar salvo atualiza ranking e estatisticas
+- Ranking e stats ficam em tabelas de cache para leitura rapida
 
-## Resultado e ranking
+## Modelo de dominio
 
-- Ao lancar o placar:
-  - salva resultado da partida
-  - recalcula standings da temporada
-  - recalcula stats dos jogadores
-- Ranking e stats sao mantidos em tabelas de cache para leitura rapida
+- `User`
+- `Group`
+- `Membership`
+- `Player`
+- `Season`
+- `ScoringRule`
+- `MatchDay`
+- `Appearance`
+- `Team`
+- `TeamPlayer`
+- `Match`
+- `MatchEvent`
+- `SeasonStandings`
+- `PlayerSeasonStats`
+- `Ledger`
+- `LedgerEntry`
 
-## Entidades principais (resumo)
-
-- `User`: usuario com login
-- `Group`: grupo da pelada
-- `Membership`: vinculo do usuario no grupo com papel (`OWNER/ADMIN/MEMBER`)
-- `Player`: jogador do grupo (pode ou nao estar vinculado a um `User`)
-- `Season`: temporada do grupo
-- `ScoringRule`: regra de pontuacao da temporada
-- `MatchDay`: rodada
-- `Appearance`: presenca por jogador na rodada
-- `Team`: time gerado na rodada
-- `TeamPlayer`: jogadores que pertencem ao time
-- `Match`: partida da rodada (A x B)
-- `MatchEvent`: eventos da partida (ex.: gol)
-- `SeasonStandings`: cache de ranking da temporada
-- `PlayerSeasonStats`: cache de stats por jogador
-- `Ledger` / `LedgerEntry`: financeiro simples (API suportada)
-
-## APIs principais (o que fazem)
+## API resumida
 
 ### Auth
 
-- `POST /auth/register`: cria usuario e retorna token JWT
-- `POST /auth/login`: autentica e retorna token JWT
+- `POST /auth/register`
+- `POST /auth/login`
 
 ### Groups
 
-- `POST /groups`: cria grupo
-- `GET /groups/{id}`: detalhes do grupo
-- `POST /groups/{id}/invite`: gera codigo/link de convite
-- `POST /groups/join`: entra no grupo via codigo
+- `POST /groups`
+- `GET /groups/{id}`
+- `POST /groups/{id}/invite`
+- `POST /groups/join`
 
 ### Players
 
-- `POST /groups/{id}/players`: cadastra jogador no grupo
-- `GET /groups/{id}/players`: lista jogadores do grupo
-- `PATCH /players/{id}`: atualiza jogador (ex.: ativo/inativo)
+- `POST /groups/{id}/players`
+- `GET /groups/{id}/players`
+- `PATCH /players/{id}`
 
 ### Seasons
 
-- `POST /groups/{id}/seasons`: cria temporada e regra de pontuacao
-- `POST /seasons/{id}/close`: encerra temporada
-- `GET /seasons/{id}/standings`: ranking da temporada
-- `GET /seasons/{id}/player-stats`: stats dos jogadores
-- `GET /seasons/{id}/matchdays`: lista rodadas da temporada
+- `POST /groups/{id}/seasons`
+- `POST /seasons/{id}/close`
+- `GET /seasons/{id}/standings`
+- `GET /seasons/{id}/player-stats`
+- `GET /seasons/{id}/matchdays`
 
 ### MatchDays
 
-- `POST /seasons/{id}/matchdays`: cria rodada
-- `GET /matchdays/{id}`: detalhes da rodada (presenca, times, partidas)
-- `POST /matchdays/{id}/attendance`: confirma/atualiza presenca
-- `POST /matchdays/{id}/lock`: trava rodada e gera times
+- `POST /seasons/{id}/matchdays`
+- `GET /matchdays/{id}`
+- `POST /matchdays/{id}/attendance`
+- `POST /matchdays/{id}/lock`
 
 ### Matches
 
-- `POST /matchdays/{id}/matches`: cria partida manual (suporte adicional)
-- `POST /matches/{id}/result`: lanca placar e atualiza ranking/stats
+- `POST /matchdays/{id}/matches`
+- `POST /matches/{id}/result`
 
 ### Finance
 
-- `POST /groups/{id}/ledger/entries`: cria lancamento financeiro
-- `GET /groups/{id}/ledger`: consulta saldo e lancamentos
+- `POST /groups/{id}/ledger/entries`
+- `GET /groups/{id}/ledger`
 
-## PWA (uso no celular)
+## PWA
 
-- `manifest.json` configurado
-- `service worker` para cache basico
-- icone do app (`icon.svg`)
-- modo `standalone` (instalavel no celular)
+- `manifest.json`
+- `service worker`
+- icone do app
+- modo `standalone`
 
-## Ambiente local atual (teste)
+## Limitacoes atuais
 
-- Frontend: `http://localhost:3000`
-- API: `http://localhost:8000`
-- Conta demo:
-  - `demo@hubfutebol.dev`
-  - senha `123456`
-  - codigo `demo123`
-
-## Limitacoes atuais do MVP
-
-- Sem tela dedicada para criar grupo (API existe; pode ser usada via cliente/API tool)
-- Gols detalhados por jogador existem na API, mas tela admin atualmente lanca placar sem detalhar eventos
-- Financeiro suportado na API, mas UI ainda nao exposta
-- Deploy local de teste atual usa SQLite (deploy real continua recomendado com Postgres)
-
+- Nao ha tela dedicada para criar grupo na home; a API existe
+- O admin lanca placar, mas nao detalha eventos por jogador na UI
+- O financeiro existe na API, mas ainda nao foi levado para a interface
+- O projeto ainda aceita SQLite para testes locais, embora o deploy alvo use Postgres
+- Nao ha suite automatizada de testes no repositorio
