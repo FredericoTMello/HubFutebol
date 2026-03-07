@@ -178,3 +178,201 @@ Este commit foi usado para testar o deploy automático via GitHub Actions + self
 ## Deploy automático ativo 🚀
 
 Este commit foi usado para testar o deploy automático via GitHub Actions + self-hosted runner no servidor Hetzner.
+# HubFutebol
+
+Sistema MVP para gestão de times e campeonatos de futebol amador.
+
+## Arquitetura
+
+O projeto roda em containers Docker com a seguinte estrutura:
+
+* **web** – Frontend Next.js
+* **api** – Backend FastAPI
+* **db** – PostgreSQL
+* **reverse-proxy** – Nginx
+* **uptime-kuma** – Monitoramento
+* **netdata** – Métricas do servidor
+
+## Infraestrutura
+
+Servidor: Hetzner
+Rede privada: Tailscale
+Orquestração: Docker Compose
+
+## Containers principais
+
+| Serviço       | Função           | Porta |
+| ------------- | ---------------- | ----- |
+| web           | Frontend Next.js | 3000  |
+| api           | Backend FastAPI  | 8000  |
+| db            | PostgreSQL       | 5432  |
+| reverse-proxy | Nginx            | 8080  |
+| uptime-kuma   | Monitoramento    | 3001  |
+| netdata       | Métricas         | 19999 |
+
+## Estrutura do projeto
+
+```
+HubFutebol
+├── apps
+│   ├── api
+│   └── web
+├── infra
+│   └── nginx
+├── docker-compose.yml
+```
+
+## Subindo o projeto
+
+```bash
+git pull
+cd ~/HubFutebol
+docker compose up -d --build
+```
+
+## Verificar containers
+
+```bash
+docker compose ps
+```
+
+## Logs
+
+```bash
+docker compose logs -f
+```
+
+## Backup automático do banco
+
+Backups rodam diariamente às 03:00.
+
+Script:
+
+```
+~/scripts/backup_hubfutebol_postgres.sh
+```
+
+Local dos backups:
+
+```
+~/backups/hubfutebol/postgres
+```
+
+Executar manualmente:
+
+```bash
+~/scripts/backup_hubfutebol_postgres.sh
+```
+
+## Monitoramento
+
+### Uptime Kuma
+
+Acesso via Tailscale:
+
+```
+http://100.83.83.44:3001
+```
+
+Monitor configurado para verificar o Nginx interno:
+
+```
+http://hubfutebol-reverse-proxy-1
+```
+
+### Netdata
+
+Dashboard:
+
+```
+http://100.83.83.44:19999
+```
+
+Mostra:
+
+* CPU
+* RAM
+* Docker containers
+* Rede
+* Disco
+
+## Atualização do sistema
+
+```bash
+cd ~/HubFutebol
+git pull
+docker compose up -d --build
+```
+
+## Reiniciar serviços
+
+```bash
+docker compose restart
+```
+
+## Reiniciar somente API
+
+```bash
+docker compose restart api
+```
+
+## Reiniciar Nginx
+
+```bash
+docker compose restart reverse-proxy
+```
+
+## Banco de dados
+
+Entrar no container:
+
+```bash
+docker compose exec db psql -U $POSTGRES_USER -d $POSTGRES_DB
+```
+
+## Health check rápido
+
+Testar Nginx:
+
+```bash
+curl -I http://localhost:8080
+```
+
+Testar API:
+
+```bash
+curl -I http://localhost:8000
+```
+
+## Redes Docker
+
+Rede principal do sistema:
+
+```
+hubfutebol_default
+```
+
+Containers conectados:
+
+* api
+* web
+* db
+* reverse-proxy
+* uptime-kuma
+
+## Segurança
+
+* acesso externo apenas via Tailscale
+* serviços internos não expostos publicamente
+
+## Próximos passos
+
+* autenticação de usuários
+* gestão de times
+* controle de pagamentos
+* criação de campeonatos
+* geração automática de tabela
+
+---
+
+Projeto em desenvolvimento.
