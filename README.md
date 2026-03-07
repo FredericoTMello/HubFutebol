@@ -170,3 +170,7 @@ python scripts/seed_demo.py
 ```powershell
 Stop-Process -Id <PID_API>,<PID_WEB>
 ```
+
+## Deploy automático ativo 🚀
+
+Este commit foi usado para testar o deploy automático via GitHub Actions + self-hosted runner no servidor Hetzner.
