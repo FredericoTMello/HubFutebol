@@ -174,3 +174,7 @@ Stop-Process -Id <PID_API>,<PID_WEB>
 ## Deploy automático ativo 🚀
 
 Este commit foi usado para testar o deploy automático via GitHub Actions + self-hosted runner no servidor Hetzner.
+
+## Deploy automático ativo 🚀
+
+Este commit foi usado para testar o deploy automático via GitHub Actions + self-hosted runner no servidor Hetzner.
