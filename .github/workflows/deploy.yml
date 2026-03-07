@@ -23,30 +23,47 @@ jobs:
           echo "Deploying commit: $GITHUB_SHA"
           git rev-parse --short HEAD
 
-      - name: Sync repo to pushed commit
+      - name: Deploy with rollback
+        shell: bash
         run: |
-          cd /home/frederico/HubFutebol
+          set -Eeuo pipefail
+
+          APP_DIR="/home/frederico/HubFutebol"
+          cd "$APP_DIR"
+
+          PREV_COMMIT="$(git rev-parse HEAD)"
+          echo "PREV_COMMIT=$PREV_COMMIT"
+          echo "NEW_COMMIT=$GITHUB_SHA"
+
+          rollback() {
+            echo "=== DEPLOY FALHOU - INICIANDO ROLLBACK ==="
+            cd "$APP_DIR"
+            git fetch --all --prune || true
+            git reset --hard "$PREV_COMMIT" || true
+            docker compose up -d --build || true
+            sleep 8
+            curl -fsSI http://127.0.0.1:8080 || true
+            curl -fksSI https://servidor-openclaw.tail5ef8ad.ts.net || true
+            echo "=== ROLLBACK FINALIZADO ==="
+          }
+
+          trap rollback ERR
+
           git fetch --all --prune
           git reset --hard "$GITHUB_SHA"
 
-      - name: Docker compose config
-        run: |
-          cd /home/frederico/HubFutebol
           docker compose config >/tmp/hubfutebol-compose-rendered.yml
-          tail -n 20 /tmp/hubfutebol-compose-rendered.yml || true
-
-      - name: Rebuild and restart
-        run: |
-          cd /home/frederico/HubFutebol
           docker compose up -d --build
 
-      - name: Wait for app
-        run: sleep 8
+          sleep 8
 
-      - name: Health check local
-        run: |
-          curl -fI http://127.0.0.1:8080
+          curl -fsSI http://127.0.0.1:8080
+          curl -fksSI https://servidor-openclaw.tail5ef8ad.ts.net
 
-      - name: Health check tailnet
+          echo "=== DEPLOY OK ==="
+
+      - name: Show running revision
+        shell: bash
         run: |
-          curl -fkI https://servidor-openclaw.tail5ef8ad.ts.net
+          cd /home/frederico/HubFutebol
+          git rev-parse HEAD
