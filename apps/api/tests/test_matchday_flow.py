@@ -145,3 +145,40 @@ def test_matchday_result_recomputes_standings_and_stats(client: TestClient) -> N
     assert stats[home_scorer]["goals"] == 2
     assert stats[away_scorer]["goals"] == 1
     assert all(stats[player_id]["appearances"] == 1 for player_id in player_ids)
+
+    second_matchday_response = client.post(
+        f"/seasons/{season_id}/matchdays",
+        json={"title": "Rodada 2", "scheduled_for": "2026-03-17"},
+        headers=auth_headers(token),
+    )
+    assert second_matchday_response.status_code == 201, second_matchday_response.text
+
+    matchdays_response = client.get(
+        f"/seasons/{season_id}/matchdays?limit=1&offset=1",
+        headers=auth_headers(token),
+    )
+    assert matchdays_response.status_code == 200
+    assert matchdays_response.headers["X-Total-Count"] == "2"
+    assert matchdays_response.headers["X-Limit"] == "1"
+    assert matchdays_response.headers["X-Offset"] == "1"
+    assert [item["title"] for item in matchdays_response.json()] == ["Rodada 1"]
+
+    paginated_standings_response = client.get(
+        f"/seasons/{season_id}/standings?limit=2&offset=1",
+        headers=auth_headers(token),
+    )
+    assert paginated_standings_response.status_code == 200
+    assert paginated_standings_response.headers["X-Total-Count"] == "4"
+    assert paginated_standings_response.headers["X-Limit"] == "2"
+    assert paginated_standings_response.headers["X-Offset"] == "1"
+    assert len(paginated_standings_response.json()["items"]) == 2
+
+    paginated_stats_response = client.get(
+        f"/seasons/{season_id}/player-stats?limit=2&offset=1",
+        headers=auth_headers(token),
+    )
+    assert paginated_stats_response.status_code == 200
+    assert paginated_stats_response.headers["X-Total-Count"] == "4"
+    assert paginated_stats_response.headers["X-Limit"] == "2"
+    assert paginated_stats_response.headers["X-Offset"] == "1"
+    assert len(paginated_stats_response.json()["items"]) == 2

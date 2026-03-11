@@ -8,13 +8,15 @@ def test_owner_can_create_group_player_and_season(client: TestClient) -> None:
     token = owner["access_token"]
     group = create_group(client, token)
 
-    player_response = client.post(
-        f"/groups/{group['id']}/players",
-        json={"name": "Joao", "nickname": "J", "position": "MID", "skill_rating": 7},
-        headers=auth_headers(token),
-    )
-    assert player_response.status_code == 201
-    player = player_response.json()
+    for name, nickname, rating in [("Joao", "J", 7), ("Bruno", "B", 6), ("Carlos", "C", 5)]:
+        player_response = client.post(
+            f"/groups/{group['id']}/players",
+            json={"name": name, "nickname": nickname, "position": "MID", "skill_rating": rating},
+            headers=auth_headers(token),
+        )
+        assert player_response.status_code == 201
+
+    player = client.get(f"/groups/{group['id']}/players", headers=auth_headers(token)).json()[2]
     assert player["group_id"] == group["id"]
     assert player["name"] == "Joao"
 
@@ -35,4 +37,14 @@ def test_owner_can_create_group_player_and_season(client: TestClient) -> None:
 
     players_response = client.get(f"/groups/{group['id']}/players", headers=auth_headers(token))
     assert players_response.status_code == 200
-    assert [item["name"] for item in players_response.json()] == ["Joao"]
+    assert [item["name"] for item in players_response.json()] == ["Bruno", "Carlos", "Joao"]
+
+    paginated_players_response = client.get(
+        f"/groups/{group['id']}/players?limit=2&offset=1",
+        headers=auth_headers(token),
+    )
+    assert paginated_players_response.status_code == 200
+    assert paginated_players_response.headers["X-Total-Count"] == "3"
+    assert paginated_players_response.headers["X-Limit"] == "2"
+    assert paginated_players_response.headers["X-Offset"] == "1"
+    assert [item["name"] for item in paginated_players_response.json()] == ["Carlos", "Joao"]

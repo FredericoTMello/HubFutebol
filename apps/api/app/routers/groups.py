@@ -74,4 +74,3 @@ def join_group(payload: JoinGroupIn, db: DBSession, current_user: CurrentUser) -
         db.add(Membership(group_id=group.id, user_id=current_user.id, role=RoleEnum.MEMBER))
         db.commit()
     return _group_out(db, group)
-

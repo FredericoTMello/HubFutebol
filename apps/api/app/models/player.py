@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
 from .shared import utcnow
+
+if TYPE_CHECKING:
+    from .group import Group
 
 
 class Player(Base):
@@ -21,4 +27,4 @@ class Player(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    group: Mapped["Group"] = relationship(back_populates="players")
+    group: Mapped[Group] = relationship(back_populates="players")

@@ -41,9 +41,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 def get_membership_or_404(db: Session, group_id: int, user_id: int) -> Membership:
-    membership = db.scalar(
-        select(Membership).where(Membership.group_id == group_id, Membership.user_id == user_id)
-    )
+    membership = db.scalar(select(Membership).where(Membership.group_id == group_id, Membership.user_id == user_id))
     if not membership:
         raise HTTPException(status_code=404, detail="Membership not found for group")
     return membership
@@ -54,4 +52,3 @@ def require_role(db: Session, group_id: int, user_id: int, minimum: RoleEnum) ->
     if ROLE_WEIGHT[membership.role] < ROLE_WEIGHT[minimum]:
         raise HTTPException(status_code=403, detail="Insufficient role")
     return membership
-

@@ -3,6 +3,7 @@
 ## Status de Execucao - 2026-03-11
 
 - Alta prioridade concluida e validada nesta branch local.
+- Media prioridade concluida e validada nesta branch local.
 - Backend:
   - `apps/api/app/models.py` foi dividido em `apps/api/app/models/`
   - `apps/api/app/schemas.py` foi dividido em `apps/api/app/schemas/`
@@ -10,23 +11,25 @@
   - imports inline removidos em `routers/matchdays.py`, `routers/finance.py` e no fluxo de ledger
   - `apps/api/alembic/versions/0001_initial.py` reescrita com `op.create_table(...)`
   - suite inicial de `pytest` criada e validada
+  - prefixes internos dos routers foram padronizados sem mudar os endpoints publicos consumidos pelo frontend
+  - `serialize_matchday` agora devolve `MatchDayOut` tipado com submodels
+  - paginação por `limit` e `offset` foi adicionada em `list_players`, `list_matchdays`, `season_standings`, `player_stats` e `get_ledger`
+  - configuracao de lint/format Python adicionada com `apps/api/pyproject.toml` + Ruff
 - Repositorio:
   - `.gitignore` atualizado para ignorar `*.db` e `.run/`
   - `apps/api/hubfutebol.db` e `.run/*` removidos do tracking com `git rm --cached`
+  - `pnpm-lock.yaml` voltou para o versionamento
 - Frontend:
   - suite inicial com Vitest + Testing Library criada e validada
-- Validacao executada:
-  - `apps/api`: `.venv\\Scripts\\python -m pytest -q` -> `4 passed`
-  - `apps/web`: `corepack pnpm test` -> `8 passed`
-- Media prioridade em andamento:
   - `admin/page.tsx` foi quebrada em componentes por fluxo
   - `round/page.tsx` foi quebrada em componentes por fluxo
   - `loading/error/empty` agora usam estado compartilhado no frontend
-  - `serialize_matchday` agora devolve `MatchDayOut` tipado com submodels
   - `apps/web/components/` foi consolidado em `components/app/` e `components/ui/`
-  - `pnpm-lock.yaml` voltou para o versionamento
-- Validacao extra:
+  - `apps/web` continua compativel com os mesmos paths publicos da API
+- Validacao executada:
   - `apps/api`: `.venv\\Scripts\\python -m pytest -q` -> `5 passed`
+  - `apps/api`: `.venv\\Scripts\\python -m ruff check --fix .` -> ok
+  - `apps/api`: `.venv\\Scripts\\python -m ruff format .` -> ok
   - `apps/web`: `corepack pnpm exec tsc -p tsconfig.json --noEmit` -> ok
   - `apps/web`: `corepack pnpm test` -> `8 passed`
 
@@ -47,12 +50,12 @@
 - [x] Decompor `apps/web/app/g/[groupId]/admin/page.tsx` em subcomponentes (`InviteCard`, `SeasonForm`, `MatchdayManager`, `ResultForm`)
 - [x] Decompor `apps/web/app/g/[groupId]/round/page.tsx` extraindo `AttendanceForm` e `AttendanceList`
 - [x] Criar padrao compartilhado para loading/error states nas paginas do frontend
-- [ ] Padronizar prefixos de rotas da API
+- [x] Padronizar prefixos de rotas da API
 - [x] Refatorar `apps/api/app/routers/utils.py` (`serialize_matchday`) para usar serializacao via Pydantic models
 - [x] Separar `apps/web/components/` em `components/app/` e `components/ui/`
 - [x] Reverter `pnpm-lock.yaml` no `.gitignore` e commita-lo
-- [ ] Adicionar configuracao de linting/formatting Python (`pyproject.toml` com Ruff ou Black + isort)
-- [ ] Adicionar paginacao nos endpoints de listagem (`list_players`, `list_matchdays`, `season_standings`, `player_stats`, `get_ledger`)
+- [x] Adicionar configuracao de linting/formatting Python (`pyproject.toml` com Ruff ou Black + isort)
+- [x] Adicionar paginacao nos endpoints de listagem (`list_players`, `list_matchdays`, `season_standings`, `player_stats`, `get_ledger`)
 
 ## Baixa Prioridade / Melhorias Futuras
 
@@ -64,4 +67,4 @@
 - [ ] Configurar ESLint com regras mais estritas para o frontend (`apps/web/`)
 - [ ] Criar `apps/api/app/exceptions.py` com excecoes de dominio customizadas em vez de usar `HTTPException` diretamente nos services
 - [ ] Adicionar `apps/web/middleware.ts` para protecao de rotas server-side em vez de depender apenas do `AuthGate` client-side
-- [ ] Tipar o retorno de `apps/api/app/routers/utils.py:serialize_matchday`
+- [x] Tipar o retorno de `apps/api/app/routers/utils.py:serialize_matchday`

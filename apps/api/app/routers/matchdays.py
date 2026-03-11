@@ -8,6 +8,8 @@ from ..services import generate_balanced_teams, recompute_season_caches
 from .utils import get_matchday_or_404, serialize_matchday
 
 router = APIRouter(tags=["matchdays"])
+season_matchdays_router = APIRouter(prefix="/seasons/{season_id}/matchdays", tags=["matchdays"])
+matchday_router = APIRouter(prefix="/matchdays", tags=["matchdays"])
 
 
 def _season_or_404(db: DBSession, season_id: int) -> Season:
@@ -17,7 +19,7 @@ def _season_or_404(db: DBSession, season_id: int) -> Season:
     return season
 
 
-@router.post("/seasons/{season_id}/matchdays", response_model=MatchDayOut, status_code=status.HTTP_201_CREATED)
+@season_matchdays_router.post("", response_model=MatchDayOut, status_code=status.HTTP_201_CREATED)
 def create_matchday(
     season_id: int,
     payload: MatchDayCreate,
@@ -38,7 +40,7 @@ def create_matchday(
     return serialize_matchday(db, matchday)
 
 
-@router.get("/matchdays/{matchday_id}", response_model=MatchDayOut)
+@matchday_router.get("/{matchday_id}", response_model=MatchDayOut)
 def get_matchday(matchday_id: int, db: DBSession, current_user: CurrentUser) -> MatchDayOut:
     matchday = get_matchday_or_404(db, matchday_id)
     season = db.get(Season, matchday.season_id)
@@ -48,7 +50,7 @@ def get_matchday(matchday_id: int, db: DBSession, current_user: CurrentUser) -> 
     return serialize_matchday(db, matchday)
 
 
-@router.post("/matchdays/{matchday_id}/attendance", response_model=AppearanceOut)
+@matchday_router.post("/{matchday_id}/attendance", response_model=AppearanceOut)
 def set_attendance(
     matchday_id: int,
     payload: AppearanceIn,
@@ -88,7 +90,7 @@ def set_attendance(
     return AppearanceOut(matchday_id=appearance.matchday_id, player_id=appearance.player_id, status=appearance.status)
 
 
-@router.post("/matchdays/{matchday_id}/lock", response_model=LockMatchDayOut)
+@matchday_router.post("/{matchday_id}/lock", response_model=LockMatchDayOut)
 def lock_matchday(matchday_id: int, db: DBSession, current_user: CurrentUser) -> LockMatchDayOut:
     matchday = get_matchday_or_404(db, matchday_id)
     season = db.get(Season, matchday.season_id)
@@ -99,3 +101,7 @@ def lock_matchday(matchday_id: int, db: DBSession, current_user: CurrentUser) ->
     teams, match = generate_balanced_teams(db, matchday)
     db.commit()
     return LockMatchDayOut(matchday_id=matchday_id, locked=True, teams=teams, match_id=match.id if match else None)
+
+
+router.include_router(season_matchdays_router)
+router.include_router(matchday_router)

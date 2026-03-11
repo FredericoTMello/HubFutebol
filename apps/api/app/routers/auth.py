@@ -33,4 +33,3 @@ def login(payload: UserLogin, db: DBSession) -> TokenOut:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_access_token(str(user.id))
     return TokenOut(access_token=token, user=user)
-

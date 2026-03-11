@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
 from .shared import utcnow
+
+if TYPE_CHECKING:
+    from .group import Group
 
 
 class Ledger(Base):
@@ -17,7 +23,7 @@ class Ledger(Base):
     balance: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0.00"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    group: Mapped["Group"] = relationship(back_populates="ledger")
+    group: Mapped[Group] = relationship(back_populates="ledger")
 
 
 class LedgerEntry(Base):

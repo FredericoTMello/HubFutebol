@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
 from .shared import utcnow
+
+if TYPE_CHECKING:
+    from .group import Group
 
 
 class Season(Base):
@@ -18,8 +24,8 @@ class Season(Base):
     ended_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    group: Mapped["Group"] = relationship(back_populates="seasons")
-    scoring_rule: Mapped["ScoringRule | None"] = relationship(back_populates="season", uselist=False)
+    group: Mapped[Group] = relationship(back_populates="seasons")
+    scoring_rule: Mapped[ScoringRule | None] = relationship(back_populates="season", uselist=False)
 
 
 class ScoringRule(Base):
@@ -33,7 +39,7 @@ class ScoringRule(Base):
     loss_points: Mapped[int] = mapped_column(Integer, default=0)
     no_show_points: Mapped[int] = mapped_column(Integer, default=-1)
 
-    season: Mapped["Season"] = relationship(back_populates="scoring_rule")
+    season: Mapped[Season] = relationship(back_populates="scoring_rule")
 
 
 class SeasonStandings(Base):

@@ -76,9 +76,7 @@ def recompute_season_caches(db: Session, season_id: int) -> None:
     matchday_ids = [matchday.id for matchday in matchdays]
 
     appearances = (
-        db.scalars(select(Appearance).where(Appearance.matchday_id.in_(matchday_ids))).all()
-        if matchday_ids
-        else []
+        db.scalars(select(Appearance).where(Appearance.matchday_id.in_(matchday_ids))).all() if matchday_ids else []
     )
 
     counted_confirmed = set()

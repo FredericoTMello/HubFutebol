@@ -1,14 +1,24 @@
 import sys
-from pathlib import Path
 from datetime import date
+from pathlib import Path
 
 from sqlalchemy import select
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.database import SessionLocal
-from app.models import Appearance, AppearanceStatus, Membership, RoleEnum, ScoringRule
-from app.models import Group, MatchDay, Player, Season, User
+from app.models import (
+    Appearance,
+    AppearanceStatus,
+    Group,
+    MatchDay,
+    Membership,
+    Player,
+    RoleEnum,
+    ScoringRule,
+    Season,
+    User,
+)
 from app.security import hash_password
 
 
@@ -31,7 +41,7 @@ def run() -> None:
         players = db.scalars(select(Player).where(Player.group_id == group.id)).all()
         if not players:
             players = [
-                Player(group_id=group.id, name="João", position="DEF", skill_rating=7),
+                Player(group_id=group.id, name="Joao", position="DEF", skill_rating=7),
                 Player(group_id=group.id, name="Pedro", position="MID", skill_rating=8),
                 Player(group_id=group.id, name="Lucas", position="FWD", skill_rating=6),
                 Player(group_id=group.id, name="Rafa", position="DEF", skill_rating=5),
@@ -46,15 +56,30 @@ def run() -> None:
             season = Season(group_id=group.id, name="Temporada Demo", is_active=True)
             db.add(season)
             db.flush()
-            db.add(ScoringRule(season_id=season.id, win_points=3, draw_points=1, loss_points=0, no_show_points=-1))
+            db.add(
+                ScoringRule(
+                    season_id=season.id,
+                    win_points=3,
+                    draw_points=1,
+                    loss_points=0,
+                    no_show_points=-1,
+                )
+            )
 
         matchday = db.scalar(select(MatchDay).where(MatchDay.season_id == season.id, MatchDay.title == "Rodada 1"))
         if not matchday:
             matchday = MatchDay(season_id=season.id, title="Rodada 1", scheduled_for=date.today())
             db.add(matchday)
             db.flush()
-            for p in players:
-                db.add(Appearance(matchday_id=matchday.id, player_id=p.id, status=AppearanceStatus.CONFIRMED, created_by_user_id=user.id))
+            for player in players:
+                db.add(
+                    Appearance(
+                        matchday_id=matchday.id,
+                        player_id=player.id,
+                        status=AppearanceStatus.CONFIRMED,
+                        created_by_user_id=user.id,
+                    )
+                )
 
         db.commit()
         print("Seed demo criada/atualizada.")

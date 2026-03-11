@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -6,6 +9,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..database import Base
 from .enums import RoleEnum
 from .shared import utcnow
+
+if TYPE_CHECKING:
+    from .finance import Ledger
+    from .player import Player
+    from .season import Season
+    from .user import User
 
 
 class Group(Base):
@@ -17,10 +26,10 @@ class Group(Base):
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    memberships: Mapped[list["Membership"]] = relationship(back_populates="group")
-    players: Mapped[list["Player"]] = relationship(back_populates="group")
-    seasons: Mapped[list["Season"]] = relationship(back_populates="group")
-    ledger: Mapped["Ledger | None"] = relationship(back_populates="group", uselist=False)
+    memberships: Mapped[list[Membership]] = relationship(back_populates="group")
+    players: Mapped[list[Player]] = relationship(back_populates="group")
+    seasons: Mapped[list[Season]] = relationship(back_populates="group")
+    ledger: Mapped[Ledger | None] = relationship(back_populates="group", uselist=False)
 
 
 class Membership(Base):
@@ -33,5 +42,5 @@ class Membership(Base):
     role: Mapped[RoleEnum] = mapped_column(Enum(RoleEnum), default=RoleEnum.MEMBER)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
-    user: Mapped["User"] = relationship(back_populates="memberships")
-    group: Mapped["Group"] = relationship(back_populates="memberships")
+    user: Mapped[User] = relationship(back_populates="memberships")
+    group: Mapped[Group] = relationship(back_populates="memberships")

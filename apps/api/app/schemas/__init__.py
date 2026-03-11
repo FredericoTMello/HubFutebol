@@ -14,7 +14,15 @@ from .matchday import (
     TeamPlayerOut,
 )
 from .player import PlayerCreate, PlayerOut, PlayerUpdate
-from .season import MatchDayListItem, PlayerStatItem, PlayerStatsOut, SeasonCreate, SeasonOut, StandingItem, StandingsOut
+from .season import (
+    MatchDayListItem,
+    PlayerStatItem,
+    PlayerStatsOut,
+    SeasonCreate,
+    SeasonOut,
+    StandingItem,
+    StandingsOut,
+)
 
 __all__ = [
     "AppearanceIn",

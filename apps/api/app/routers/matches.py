@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 
 from ..deps import CurrentUser, DBSession, require_role
 from ..models import Match, MatchDay, MatchEvent, MatchEventType, RoleEnum, Season, Team
@@ -9,6 +9,8 @@ from ..schemas import MatchCreate, MatchOut, MatchResultIn
 from ..services import recompute_season_caches
 
 router = APIRouter(tags=["matches"])
+matchday_matches_router = APIRouter(prefix="/matchdays/{matchday_id}/matches", tags=["matches"])
+match_router = APIRouter(prefix="/matches", tags=["matches"])
 
 
 def _match_context(db: DBSession, match_id: int) -> tuple[Match, MatchDay, Season]:
@@ -24,7 +26,7 @@ def _match_context(db: DBSession, match_id: int) -> tuple[Match, MatchDay, Seaso
     return match, matchday, season
 
 
-@router.post("/matchdays/{matchday_id}/matches", response_model=MatchOut, status_code=status.HTTP_201_CREATED)
+@matchday_matches_router.post("", response_model=MatchOut, status_code=status.HTTP_201_CREATED)
 def create_match(matchday_id: int, payload: MatchCreate, db: DBSession, current_user: CurrentUser) -> MatchOut:
     matchday = db.get(MatchDay, matchday_id)
     if not matchday:
@@ -52,7 +54,7 @@ def create_match(matchday_id: int, payload: MatchCreate, db: DBSession, current_
     )
 
 
-@router.post("/matches/{match_id}/result", response_model=MatchOut)
+@match_router.post("/{match_id}/result", response_model=MatchOut)
 def submit_result(match_id: int, payload: MatchResultIn, db: DBSession, current_user: CurrentUser) -> MatchOut:
     match, _matchday, season = _match_context(db, match_id)
     require_role(db, group_id=season.group_id, user_id=current_user.id, minimum=RoleEnum.ADMIN)
@@ -86,3 +88,6 @@ def submit_result(match_id: int, payload: MatchResultIn, db: DBSession, current_
         away_score=match.away_score,
     )
 
+
+router.include_router(matchday_matches_router)
+router.include_router(match_router)

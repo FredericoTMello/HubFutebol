@@ -1,14 +1,17 @@
-from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, Response, status
+from sqlalchemy import func, select
 
 from ..deps import CurrentUser, DBSession, get_membership_or_404, require_role
 from ..models import Group, Player, RoleEnum
+from ..pagination import Pagination, apply_pagination_headers
 from ..schemas import PlayerCreate, PlayerOut, PlayerUpdate
 
 router = APIRouter(tags=["players"])
+group_players_router = APIRouter(prefix="/groups/{group_id}/players", tags=["players"])
+player_router = APIRouter(prefix="/players", tags=["players"])
 
 
-@router.post("/groups/{group_id}/players", response_model=PlayerOut, status_code=status.HTTP_201_CREATED)
+@group_players_router.post("", response_model=PlayerOut, status_code=status.HTTP_201_CREATED)
 def create_player(group_id: int, payload: PlayerCreate, db: DBSession, current_user: CurrentUser) -> PlayerOut:
     require_role(db, group_id=group_id, user_id=current_user.id, minimum=RoleEnum.ADMIN)
     if not db.get(Group, group_id):
@@ -20,13 +23,27 @@ def create_player(group_id: int, payload: PlayerCreate, db: DBSession, current_u
     return player
 
 
-@router.get("/groups/{group_id}/players", response_model=list[PlayerOut])
-def list_players(group_id: int, db: DBSession, current_user: CurrentUser) -> list[PlayerOut]:
+@group_players_router.get("", response_model=list[PlayerOut])
+def list_players(
+    group_id: int,
+    response: Response,
+    pagination: Pagination,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> list[PlayerOut]:
     get_membership_or_404(db, group_id=group_id, user_id=current_user.id)
-    return db.scalars(select(Player).where(Player.group_id == group_id).order_by(Player.name)).all()
+    total = db.scalar(select(func.count()).select_from(Player).where(Player.group_id == group_id)) or 0
+    apply_pagination_headers(response, total=total, pagination=pagination)
+    return db.scalars(
+        select(Player)
+        .where(Player.group_id == group_id)
+        .order_by(Player.name)
+        .offset(pagination.offset)
+        .limit(pagination.limit)
+    ).all()
 
 
-@router.patch("/players/{player_id}", response_model=PlayerOut)
+@player_router.patch("/{player_id}", response_model=PlayerOut)
 def update_player(player_id: int, payload: PlayerUpdate, db: DBSession, current_user: CurrentUser) -> PlayerOut:
     player = db.get(Player, player_id)
     if not player:
@@ -38,3 +55,6 @@ def update_player(player_id: int, payload: PlayerUpdate, db: DBSession, current_
     db.refresh(player)
     return player
 
+
+router.include_router(group_players_router)
+router.include_router(player_router)

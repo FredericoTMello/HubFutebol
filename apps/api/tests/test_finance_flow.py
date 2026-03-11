@@ -31,3 +31,13 @@ def test_ledger_entries_update_group_balance(client: TestClient) -> None:
     expense_ledger = expense_response.json()
     assert expense_ledger["balance"] == "100.00"
     assert [entry["kind"] for entry in expense_ledger["entries"]] == ["EXPENSE", "IN"]
+
+    paginated_ledger = client.get(
+        f"/groups/{group['id']}/ledger?limit=1&offset=1",
+        headers=auth_headers(token),
+    )
+    assert paginated_ledger.status_code == 200
+    assert paginated_ledger.headers["X-Total-Count"] == "2"
+    assert paginated_ledger.headers["X-Limit"] == "1"
+    assert paginated_ledger.headers["X-Offset"] == "1"
+    assert [entry["kind"] for entry in paginated_ledger.json()["entries"]] == ["IN"]

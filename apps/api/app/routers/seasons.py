@@ -1,14 +1,17 @@
 from datetime import date
 
-from fastapi import APIRouter, HTTPException
-from sqlalchemy import select, update
+from fastapi import APIRouter, HTTPException, Response
+from sqlalchemy import func, select, update
 
 from ..deps import CurrentUser, DBSession, get_membership_or_404, require_role
 from ..models import Group, MatchDay, PlayerSeasonStats, RoleEnum, ScoringRule, Season, SeasonStandings
+from ..pagination import Pagination, apply_pagination_headers
 from ..schemas import MatchDayListItem, PlayerStatsOut, SeasonCreate, SeasonOut, StandingsOut
 from ..services import recompute_season_caches
 
 router = APIRouter(tags=["seasons"])
+group_seasons_router = APIRouter(prefix="/groups/{group_id}/seasons", tags=["seasons"])
+season_router = APIRouter(prefix="/seasons", tags=["seasons"])
 
 
 def _season_group_or_404(db: DBSession, season_id: int) -> tuple[Season, int]:
@@ -18,7 +21,23 @@ def _season_group_or_404(db: DBSession, season_id: int) -> tuple[Season, int]:
     return season, season.group_id
 
 
-@router.post("/groups/{group_id}/seasons", response_model=SeasonOut)
+def _standings_stmt(season_id: int):
+    return (
+        select(SeasonStandings)
+        .where(SeasonStandings.season_id == season_id)
+        .order_by(SeasonStandings.points.desc(), SeasonStandings.wins.desc(), SeasonStandings.player_name)
+    )
+
+
+def _player_stats_stmt(season_id: int):
+    return (
+        select(PlayerSeasonStats)
+        .where(PlayerSeasonStats.season_id == season_id)
+        .order_by(PlayerSeasonStats.goals.desc(), PlayerSeasonStats.appearances.desc(), PlayerSeasonStats.player_name)
+    )
+
+
+@group_seasons_router.post("", response_model=SeasonOut)
 def create_season(group_id: int, payload: SeasonCreate, db: DBSession, current_user: CurrentUser) -> SeasonOut:
     require_role(db, group_id=group_id, user_id=current_user.id, minimum=RoleEnum.ADMIN)
     if not db.get(Group, group_id):
@@ -42,7 +61,7 @@ def create_season(group_id: int, payload: SeasonCreate, db: DBSession, current_u
     return season
 
 
-@router.post("/seasons/{season_id}/close", response_model=SeasonOut)
+@season_router.post("/{season_id}/close", response_model=SeasonOut)
 def close_season(season_id: int, db: DBSession, current_user: CurrentUser) -> SeasonOut:
     season, group_id = _season_group_or_404(db, season_id)
     require_role(db, group_id=group_id, user_id=current_user.id, minimum=RoleEnum.ADMIN)
@@ -53,24 +72,30 @@ def close_season(season_id: int, db: DBSession, current_user: CurrentUser) -> Se
     return season
 
 
-@router.get("/seasons/{season_id}/standings", response_model=StandingsOut)
-def season_standings(season_id: int, db: DBSession, current_user: CurrentUser) -> StandingsOut:
+@season_router.get("/{season_id}/standings", response_model=StandingsOut)
+def season_standings(
+    season_id: int,
+    response: Response,
+    pagination: Pagination,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> StandingsOut:
     season, group_id = _season_group_or_404(db, season_id)
     get_membership_or_404(db, group_id=group_id, user_id=current_user.id)
 
-    items = db.scalars(
-        select(SeasonStandings)
-        .where(SeasonStandings.season_id == season.id)
-        .order_by(SeasonStandings.points.desc(), SeasonStandings.wins.desc(), SeasonStandings.player_name)
-    ).all()
-    if not items and db.scalar(select(MatchDay).where(MatchDay.season_id == season.id)):
+    total = (
+        db.scalar(select(func.count()).select_from(SeasonStandings).where(SeasonStandings.season_id == season.id)) or 0
+    )
+    if total == 0 and db.scalar(select(MatchDay.id).where(MatchDay.season_id == season.id).limit(1)):
         recompute_season_caches(db, season.id)
         db.commit()
-        items = db.scalars(
-            select(SeasonStandings)
-            .where(SeasonStandings.season_id == season.id)
-            .order_by(SeasonStandings.points.desc(), SeasonStandings.wins.desc(), SeasonStandings.player_name)
-        ).all()
+        total = (
+            db.scalar(select(func.count()).select_from(SeasonStandings).where(SeasonStandings.season_id == season.id))
+            or 0
+        )
+
+    apply_pagination_headers(response, total=total, pagination=pagination)
+    items = db.scalars(_standings_stmt(season.id).offset(pagination.offset).limit(pagination.limit)).all()
 
     return StandingsOut(
         season_id=season.id,
@@ -90,28 +115,33 @@ def season_standings(season_id: int, db: DBSession, current_user: CurrentUser) -
     )
 
 
-@router.get("/seasons/{season_id}/player-stats", response_model=PlayerStatsOut)
-def player_stats(season_id: int, db: DBSession, current_user: CurrentUser) -> PlayerStatsOut:
+@season_router.get("/{season_id}/player-stats", response_model=PlayerStatsOut)
+def player_stats(
+    season_id: int,
+    response: Response,
+    pagination: Pagination,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> PlayerStatsOut:
     season, group_id = _season_group_or_404(db, season_id)
     get_membership_or_404(db, group_id=group_id, user_id=current_user.id)
 
-    items = db.scalars(
-        select(PlayerSeasonStats)
-        .where(PlayerSeasonStats.season_id == season.id)
-        .order_by(PlayerSeasonStats.goals.desc(), PlayerSeasonStats.appearances.desc(), PlayerSeasonStats.player_name)
-    ).all()
-    if not items and db.scalar(select(MatchDay).where(MatchDay.season_id == season.id)):
+    total = (
+        db.scalar(select(func.count()).select_from(PlayerSeasonStats).where(PlayerSeasonStats.season_id == season.id))
+        or 0
+    )
+    if total == 0 and db.scalar(select(MatchDay.id).where(MatchDay.season_id == season.id).limit(1)):
         recompute_season_caches(db, season.id)
         db.commit()
-        items = db.scalars(
-            select(PlayerSeasonStats)
-            .where(PlayerSeasonStats.season_id == season.id)
-            .order_by(
-                PlayerSeasonStats.goals.desc(),
-                PlayerSeasonStats.appearances.desc(),
-                PlayerSeasonStats.player_name,
+        total = (
+            db.scalar(
+                select(func.count()).select_from(PlayerSeasonStats).where(PlayerSeasonStats.season_id == season.id)
             )
-        ).all()
+            or 0
+        )
+
+    apply_pagination_headers(response, total=total, pagination=pagination)
+    items = db.scalars(_player_stats_stmt(season.id).offset(pagination.offset).limit(pagination.limit)).all()
 
     return PlayerStatsOut(
         season_id=season.id,
@@ -128,12 +158,24 @@ def player_stats(season_id: int, db: DBSession, current_user: CurrentUser) -> Pl
     )
 
 
-@router.get("/seasons/{season_id}/matchdays", response_model=list[MatchDayListItem])
-def list_matchdays(season_id: int, db: DBSession, current_user: CurrentUser) -> list[MatchDayListItem]:
+@season_router.get("/{season_id}/matchdays", response_model=list[MatchDayListItem])
+def list_matchdays(
+    season_id: int,
+    response: Response,
+    pagination: Pagination,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> list[MatchDayListItem]:
     season, group_id = _season_group_or_404(db, season_id)
     get_membership_or_404(db, group_id=group_id, user_id=current_user.id)
+    total = db.scalar(select(func.count()).select_from(MatchDay).where(MatchDay.season_id == season.id)) or 0
+    apply_pagination_headers(response, total=total, pagination=pagination)
     matchdays = db.scalars(
-        select(MatchDay).where(MatchDay.season_id == season.id).order_by(MatchDay.scheduled_for.desc(), MatchDay.id.desc())
+        select(MatchDay)
+        .where(MatchDay.season_id == season.id)
+        .order_by(MatchDay.scheduled_for.desc(), MatchDay.id.desc())
+        .offset(pagination.offset)
+        .limit(pagination.limit)
     ).all()
     return [
         MatchDayListItem(
@@ -145,3 +187,7 @@ def list_matchdays(season_id: int, db: DBSession, current_user: CurrentUser) -> 
         )
         for m in matchdays
     ]
+
+
+router.include_router(group_seasons_router)
+router.include_router(season_router)

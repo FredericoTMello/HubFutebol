@@ -77,4 +77,3 @@ def serialize_matchday(db: Session, matchday: MatchDay) -> MatchDayOut:
         teams=teams_out,
         matches=matches_out,
     )
-

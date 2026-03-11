@@ -29,4 +29,3 @@ app.include_router(seasons.router)
 app.include_router(matchdays.router)
 app.include_router(matches.router)
 app.include_router(finance.router)
-
