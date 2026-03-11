@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from ..deps import CurrentUser, DBSession, get_membership_or_404, require_role
-from ..models import Appearance, MatchDay, RoleEnum, Season
+from ..models import Appearance, MatchDay, Player, RoleEnum, Season
 from ..schemas import AppearanceIn, AppearanceOut, LockMatchDayOut, MatchDayCreate, MatchDayOut
 from ..services import generate_balanced_teams, recompute_season_caches
 from .utils import get_matchday_or_404, serialize_matchday
@@ -61,9 +61,6 @@ def set_attendance(
         raise HTTPException(status_code=404, detail="Season not found")
     membership = get_membership_or_404(db, group_id=season.group_id, user_id=current_user.id)
 
-    # Members can update only own linked player (when linked); admins can update any player.
-    from ..models import Player
-
     player = db.get(Player, payload.player_id)
     if not player or player.group_id != season.group_id:
         raise HTTPException(status_code=404, detail="Player not found in group")
@@ -85,6 +82,7 @@ def set_attendance(
         )
         db.add(appearance)
 
+    db.flush()
     recompute_season_caches(db, season.id)
     db.commit()
     return AppearanceOut(matchday_id=appearance.matchday_id, player_id=appearance.player_id, status=appearance.status)

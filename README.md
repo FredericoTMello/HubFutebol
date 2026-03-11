@@ -88,6 +88,25 @@ pnpm dev
 
 Com esse fluxo, o frontend roda em `http://127.0.0.1:3000` e a API em `http://127.0.0.1:8000`.
 
+## Testes
+
+### Backend
+
+```bash
+cd apps/api
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python -m pytest -q
+```
+
+### Frontend
+
+```bash
+cd apps/web
+corepack pnpm install
+corepack pnpm test
+```
+
 ## Variaveis de ambiente
 
 - `./.env`: compose, Postgres e deploy
@@ -155,4 +174,4 @@ docker compose up -d --build
 - O healthcheck da API e `GET /health`
 - O Compose versionado cobre `db`, `api`, `web` e `reverse-proxy`
 - Monitoramento, backup e acessos administrativos do servidor existem fora do repositorio e devem ser tratados como operacao externa
-- Nao ha suite automatizada de testes no repositorio neste momento
+- Ha suites iniciais de testes no backend e no frontend; a cobertura ainda e parcial

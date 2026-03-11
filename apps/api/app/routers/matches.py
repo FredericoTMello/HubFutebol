@@ -73,6 +73,7 @@ def submit_result(match_id: int, payload: MatchResultIn, db: DBSession, current_
             )
         )
 
+    db.flush()
     recompute_season_caches(db, season.id)
     db.commit()
     db.refresh(match)

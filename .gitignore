@@ -9,6 +9,7 @@ pnpm-lock.yaml
 .venv/
 __pycache__/
 *.pyc
+*.db
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -21,6 +22,7 @@ apps/api/.env*
 
 apps/api/alembic/versions/*.pyc
 postgres-data/
+.run/
 
 
 # local backups

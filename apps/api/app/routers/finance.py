@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from ..deps import CurrentUser, DBSession, get_membership_or_404, require_role
-from ..models import LedgerEntry, RoleEnum
+from ..models import Ledger, LedgerEntry, RoleEnum
 from ..schemas import LedgerEntryCreate, LedgerOut
 from ..services import ensure_group_ledger
 
@@ -45,13 +45,13 @@ def get_ledger(group_id: int, db: DBSession, current_user: CurrentUser) -> Ledge
 
 
 def _ledger_out(db: DBSession, group_id: int, ledger_id: int) -> LedgerOut:
-    from ..models import Ledger
-
     ledger = db.get(Ledger, ledger_id)
     if not ledger:
         raise HTTPException(status_code=404, detail="Ledger not found")
     entries = db.scalars(
-        select(LedgerEntry).where(LedgerEntry.ledger_id == ledger_id).order_by(LedgerEntry.created_at.desc(), LedgerEntry.id.desc())
+        select(LedgerEntry)
+        .where(LedgerEntry.ledger_id == ledger_id)
+        .order_by(LedgerEntry.created_at.desc(), LedgerEntry.id.desc())
     ).all()
     return LedgerOut(
         group_id=group_id,

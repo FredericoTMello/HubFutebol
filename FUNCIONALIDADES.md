@@ -200,4 +200,4 @@ Fluxo principal:
 - O admin lanca placar, mas nao detalha eventos por jogador na UI
 - O financeiro existe na API, mas ainda nao foi levado para a interface
 - O projeto ainda aceita SQLite para testes locais, embora o deploy alvo use Postgres
-- Nao ha suite automatizada de testes no repositorio
+- Ja existe uma suite inicial de testes no backend e no frontend, mas a cobertura ainda e parcial
