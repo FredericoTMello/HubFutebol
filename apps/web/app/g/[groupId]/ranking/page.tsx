@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 
+import { PageEmptyState, PageErrorState, PageLoadingState } from "@/components/app/page-state";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { useGroup, usePlayerStats, useStandings } from "@/lib/group-hooks";
 
@@ -13,20 +14,20 @@ export default function RankingPage() {
   const statsQuery = usePlayerStats(seasonId);
 
   if (groupQuery.isLoading || standingsQuery.isLoading || statsQuery.isLoading) {
-    return <div className="text-sm text-slate-600">Carregando ranking...</div>;
+    return <PageLoadingState message="Carregando ranking..." />;
   }
 
   if (groupQuery.error || standingsQuery.error || statsQuery.error) {
     const error = groupQuery.error || standingsQuery.error || statsQuery.error;
-    return <div className="text-sm text-danger">Erro ao carregar ranking: {String(error)}</div>;
+    return <PageErrorState message="Erro ao carregar ranking" error={error} />;
   }
 
   if (!seasonId) {
     return (
-      <Card>
-        <CardTitle>Sem temporada ativa</CardTitle>
-        <CardDescription>Crie uma temporada em Admin para habilitar ranking e estatísticas.</CardDescription>
-      </Card>
+      <PageEmptyState
+        title="Sem temporada ativa"
+        description="Crie uma temporada em Admin para habilitar ranking e estatisticas."
+      />
     );
   }
 
@@ -41,9 +42,12 @@ export default function RankingPage() {
           <CardDescription>Pontos configurados por regra da temporada (W/D/L/NO_SHOW).</CardDescription>
         </div>
         <div className="space-y-2">
-          {standings.length === 0 && <p className="text-sm text-slate-500">Ainda sem resultados lançados.</p>}
+          {standings.length === 0 && <p className="text-sm text-slate-500">Ainda sem resultados lancados.</p>}
           {standings.map((item, index) => (
-            <div key={item.player_id} className="grid grid-cols-[32px_1fr_auto] items-center gap-3 rounded-xl border border-slate-200 p-3">
+            <div
+              key={item.player_id}
+              className="grid grid-cols-[32px_1fr_auto] items-center gap-3 rounded-xl border border-slate-200 p-3"
+            >
               <div className="text-center text-sm font-bold text-brand-700">{index + 1}</div>
               <div>
                 <p className="text-sm font-semibold text-ink">{item.player_name}</p>
@@ -60,7 +64,7 @@ export default function RankingPage() {
       <Card className="space-y-3">
         <div>
           <CardTitle>Stats dos Jogadores</CardTitle>
-          <CardDescription>Artilharia e participações acumuladas na temporada.</CardDescription>
+          <CardDescription>Artilharia e participacoes acumuladas na temporada.</CardDescription>
         </div>
         <div className="space-y-2">
           {stats.length === 0 && <p className="text-sm text-slate-500">Sem stats ainda.</p>}

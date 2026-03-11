@@ -18,6 +18,12 @@
 - Validacao executada:
   - `apps/api`: `.venv\\Scripts\\python -m pytest -q` -> `4 passed`
   - `apps/web`: `corepack pnpm test` -> `8 passed`
+- Media prioridade em andamento:
+  - `admin/page.tsx` foi quebrada em componentes por fluxo
+  - `round/page.tsx` foi quebrada em componentes por fluxo
+  - `loading/error/empty` agora usam estado compartilhado no frontend
+- Validacao extra:
+  - `apps/web`: `corepack pnpm exec tsc -p tsconfig.json --noEmit` -> ok
 
 ## Alta Prioridade
 
@@ -33,9 +39,9 @@
 
 ## Media Prioridade
 
-- [ ] Decompor `apps/web/app/g/[groupId]/admin/page.tsx` em subcomponentes (`InviteCard`, `SeasonForm`, `MatchdayManager`, `ResultForm`)
-- [ ] Decompor `apps/web/app/g/[groupId]/round/page.tsx` extraindo `AttendanceForm` e `AttendanceList`
-- [ ] Criar padrao compartilhado para loading/error states nas paginas do frontend
+- [x] Decompor `apps/web/app/g/[groupId]/admin/page.tsx` em subcomponentes (`InviteCard`, `SeasonForm`, `MatchdayManager`, `ResultForm`)
+- [x] Decompor `apps/web/app/g/[groupId]/round/page.tsx` extraindo `AttendanceForm` e `AttendanceList`
+- [x] Criar padrao compartilhado para loading/error states nas paginas do frontend
 - [ ] Padronizar prefixos de rotas da API
 - [ ] Refatorar `apps/api/app/routers/utils.py` (`serialize_matchday`) para usar serializacao via Pydantic models
 - [ ] Separar `apps/web/components/` em `components/app/` e `components/ui/`

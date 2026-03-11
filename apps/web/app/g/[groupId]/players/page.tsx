@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { PageErrorState, PageLoadingState } from "@/components/app/page-state";
 import { RoleGate } from "@/components/role-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,17 +70,17 @@ export default function PlayersPage() {
   });
 
   if (groupQuery.isLoading || playersQuery.isLoading) {
-    return <div className="text-sm text-slate-600">Carregando jogadores...</div>;
+    return <PageLoadingState message="Carregando jogadores..." />;
   }
 
   if (groupQuery.error || playersQuery.error) {
     const error = groupQuery.error || playersQuery.error;
-    return <div className="text-sm text-danger">Erro ao carregar jogadores: {String(error)}</div>;
+    return <PageErrorState message="Erro ao carregar jogadores" error={error} />;
   }
 
   const group = groupQuery.data;
   const players = [...(playersQuery.data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
-  const membership = group?.memberships.find((m) => m.user_id === user?.id);
+  const membership = group?.memberships.find((item) => item.user_id === user?.id);
   const canAdmin = membership?.role === "OWNER" || membership?.role === "ADMIN";
 
   return (
@@ -89,10 +90,11 @@ export default function PlayersPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Jogadores</CardTitle>
-              <CardDescription>Cadastro por grupo, com posição e nível para balancear os times.</CardDescription>
+              <CardDescription>Cadastro por grupo, com posicao e nivel para balancear os times.</CardDescription>
             </div>
             <Badge>{players.length}</Badge>
           </div>
+
           <ul className="space-y-2">
             {players.map((player) => (
               <li
@@ -101,13 +103,15 @@ export default function PlayersPage() {
               >
                 <div>
                   <p className="text-sm font-semibold text-ink">
-                    {player.nickname || player.name} {!player.is_active && <span className="text-xs text-slate-500">(inativo)</span>}
+                    {player.nickname || player.name}{" "}
+                    {!player.is_active && <span className="text-xs text-slate-500">(inativo)</span>}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {player.position || "SEM POSIÇÃO"} · Força {player.skill_rating}
-                    {player.user_id === user?.id ? " · vinculado a você" : ""}
+                    {player.position || "SEM POSICAO"} · Forca {player.skill_rating}
+                    {player.user_id === user?.id ? " · vinculado a voce" : ""}
                   </p>
                 </div>
+
                 {canAdmin && (
                   <Button
                     size="sm"
@@ -133,22 +137,22 @@ export default function PlayersPage() {
             <form className="space-y-3" onSubmit={form.handleSubmit((values) => createPlayer.mutate(values))}>
               <div className="space-y-1">
                 <Label htmlFor="name">Nome</Label>
-                <Input id="name" placeholder="Ex: João Silva" {...form.register("name")} />
+                <Input id="name" placeholder="Ex: Joao Silva" {...form.register("name")} />
                 {form.formState.errors.name && (
                   <p className="text-xs text-danger">{form.formState.errors.name.message}</p>
                 )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="nickname">Apelido</Label>
-                <Input id="nickname" placeholder="Ex: Jão" {...form.register("nickname")} />
+                <Input id="nickname" placeholder="Ex: Jao" {...form.register("nickname")} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="position">Posição</Label>
+                  <Label htmlFor="position">Posicao</Label>
                   <Input id="position" placeholder="DEF/MID/FWD" {...form.register("position")} />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="skill_rating">Força (1-10)</Label>
+                  <Label htmlFor="skill_rating">Forca (1-10)</Label>
                   <Input id="skill_rating" type="number" min={1} max={10} {...form.register("skill_rating")} />
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import { ApiError, apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 describe("apiFetch", () => {
   afterEach(() => {
@@ -46,7 +46,7 @@ describe("apiFetch", () => {
     );
 
     await expect(apiFetch("/groups/1")).rejects.toEqual(
-      expect.objectContaining<ApiError>({
+      expect.objectContaining({
         message: "Sem permissao",
         status: 403
       })
