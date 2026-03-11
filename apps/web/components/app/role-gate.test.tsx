@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 
-import { RoleGate } from "@/components/role-gate";
+import { RoleGate } from "@/components/app/role-gate";
 import type { Group } from "@/lib/types";
 
 const group: Group = {

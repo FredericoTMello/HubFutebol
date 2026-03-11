@@ -1,6 +1,60 @@
 from fastapi.testclient import TestClient
 
+from app.models import MatchDay
+from app.routers.utils import serialize_matchday
+from app.schemas import MatchDayOut
+
 from .helpers import auth_headers, create_group, register_user
+
+
+def test_serialize_matchday_returns_matchday_schema(client: TestClient, db_session) -> None:
+    owner = register_user(client, name="Owner", email="owner+serialize@example.com")
+    token = owner["access_token"]
+    group = create_group(client, token, name="Pelada Serialize")
+
+    player_response = client.post(
+        f"/groups/{group['id']}/players",
+        json={"name": "Ana", "position": "MID", "skill_rating": 8},
+        headers=auth_headers(token),
+    )
+    assert player_response.status_code == 201, player_response.text
+    player_id = player_response.json()["id"]
+
+    season_response = client.post(
+        f"/groups/{group['id']}/seasons",
+        json={"name": "Temporada Serialize"},
+        headers=auth_headers(token),
+    )
+    assert season_response.status_code == 200, season_response.text
+    season_id = season_response.json()["id"]
+
+    matchday_response = client.post(
+        f"/seasons/{season_id}/matchdays",
+        json={"title": "Rodada Serialize", "scheduled_for": "2026-03-11"},
+        headers=auth_headers(token),
+    )
+    assert matchday_response.status_code == 201, matchday_response.text
+    matchday_id = matchday_response.json()["id"]
+
+    attendance_response = client.post(
+        f"/matchdays/{matchday_id}/attendance",
+        json={"player_id": player_id, "status": "CONFIRMED"},
+        headers=auth_headers(token),
+    )
+    assert attendance_response.status_code == 200, attendance_response.text
+
+    matchday = db_session.get(MatchDay, matchday_id)
+    assert matchday is not None
+
+    serialized = serialize_matchday(db_session, matchday)
+
+    assert isinstance(serialized, MatchDayOut)
+    assert serialized.id == matchday_id
+    assert serialized.season_id == season_id
+    assert len(serialized.attendance) == 1
+    assert serialized.attendance[0].player_id == player_id
+    assert serialized.teams == []
+    assert serialized.matches == []
 
 
 def test_matchday_result_recomputes_standings_and_stats(client: TestClient) -> None:

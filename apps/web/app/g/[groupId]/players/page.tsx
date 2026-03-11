@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { PageErrorState, PageLoadingState } from "@/components/app/page-state";
-import { RoleGate } from "@/components/role-gate";
+import { RoleGate } from "@/components/app/role-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";

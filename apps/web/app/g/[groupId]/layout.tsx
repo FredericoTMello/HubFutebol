@@ -1,4 +1,4 @@
-import { GroupShell } from "@/components/group-shell";
+import { GroupShell } from "@/components/app/group-shell";
 
 export default async function GroupLayout({
   children,

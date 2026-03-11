@@ -22,8 +22,13 @@
   - `admin/page.tsx` foi quebrada em componentes por fluxo
   - `round/page.tsx` foi quebrada em componentes por fluxo
   - `loading/error/empty` agora usam estado compartilhado no frontend
+  - `serialize_matchday` agora devolve `MatchDayOut` tipado com submodels
+  - `apps/web/components/` foi consolidado em `components/app/` e `components/ui/`
+  - `pnpm-lock.yaml` voltou para o versionamento
 - Validacao extra:
+  - `apps/api`: `.venv\\Scripts\\python -m pytest -q` -> `5 passed`
   - `apps/web`: `corepack pnpm exec tsc -p tsconfig.json --noEmit` -> ok
+  - `apps/web`: `corepack pnpm test` -> `8 passed`
 
 ## Alta Prioridade
 
@@ -43,9 +48,9 @@
 - [x] Decompor `apps/web/app/g/[groupId]/round/page.tsx` extraindo `AttendanceForm` e `AttendanceList`
 - [x] Criar padrao compartilhado para loading/error states nas paginas do frontend
 - [ ] Padronizar prefixos de rotas da API
-- [ ] Refatorar `apps/api/app/routers/utils.py` (`serialize_matchday`) para usar serializacao via Pydantic models
-- [ ] Separar `apps/web/components/` em `components/app/` e `components/ui/`
-- [ ] Reverter `pnpm-lock.yaml` no `.gitignore` e commita-lo
+- [x] Refatorar `apps/api/app/routers/utils.py` (`serialize_matchday`) para usar serializacao via Pydantic models
+- [x] Separar `apps/web/components/` em `components/app/` e `components/ui/`
+- [x] Reverter `pnpm-lock.yaml` no `.gitignore` e commita-lo
 - [ ] Adicionar configuracao de linting/formatting Python (`pyproject.toml` com Ruff ou Black + isort)
 - [ ] Adicionar paginacao nos endpoints de listagem (`list_players`, `list_matchdays`, `season_standings`, `player_stats`, `get_ledger`)
 

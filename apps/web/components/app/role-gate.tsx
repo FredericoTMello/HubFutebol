@@ -18,11 +18,10 @@ export function RoleGate({
   if (!group || !userId) return <>{children}</>;
   const membership = group.memberships.find((m) => m.user_id === userId);
   if (!membership) {
-    return <div className="rounded-xl bg-white p-4 text-sm text-danger">Você não faz parte deste grupo.</div>;
+    return <div className="rounded-xl bg-white p-4 text-sm text-danger">Voce nao faz parte deste grupo.</div>;
   }
   if (requireAdmin && !adminRoles.includes(membership.role)) {
-    return <div className="rounded-xl bg-white p-4 text-sm text-danger">Área restrita a admin/owner.</div>;
+    return <div className="rounded-xl bg-white p-4 text-sm text-danger">Area restrita a admin/owner.</div>;
   }
   return <>{children}</>;
 }
-

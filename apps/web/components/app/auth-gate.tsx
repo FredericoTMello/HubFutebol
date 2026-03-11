@@ -16,11 +16,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, [hydrated, router, token]);
 
   if (!hydrated) {
-    return <div className="p-6 text-sm text-slate-500">Carregando sessão...</div>;
+    return <div className="p-6 text-sm text-slate-500">Carregando sessao...</div>;
   }
 
   if (!token) return null;
 
   return <>{children}</>;
 }
-

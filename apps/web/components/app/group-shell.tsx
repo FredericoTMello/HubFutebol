@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-import { AuthGate } from "@/components/auth-gate";
-import { BottomNav } from "@/components/bottom-nav";
+import { AuthGate } from "@/components/app/auth-gate";
+import { BottomNav } from "@/components/app/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 

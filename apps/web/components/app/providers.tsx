@@ -3,8 +3,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { PwaRegister } from "@/components/app/pwa-register";
 import { AuthProvider } from "@/lib/auth-context";
-import { PwaRegister } from "@/components/pwa-register";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(

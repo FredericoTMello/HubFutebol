@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { PageErrorState, PageLoadingState } from "@/components/app/page-state";
-import { RoleGate } from "@/components/role-gate";
+import { RoleGate } from "@/components/app/role-gate";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useGroup, useMatchday, useSeasonMatchdays } from "@/lib/group-hooks";

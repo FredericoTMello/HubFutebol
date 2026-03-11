@@ -35,7 +35,7 @@ def create_matchday(
     db.add(matchday)
     db.commit()
     db.refresh(matchday)
-    return MatchDayOut(**serialize_matchday(db, matchday))
+    return serialize_matchday(db, matchday)
 
 
 @router.get("/matchdays/{matchday_id}", response_model=MatchDayOut)
@@ -45,7 +45,7 @@ def get_matchday(matchday_id: int, db: DBSession, current_user: CurrentUser) -> 
     if not season:
         raise HTTPException(status_code=404, detail="Season not found")
     get_membership_or_404(db, group_id=season.group_id, user_id=current_user.id)
-    return MatchDayOut(**serialize_matchday(db, matchday))
+    return serialize_matchday(db, matchday)
 
 
 @router.post("/matchdays/{matchday_id}/attendance", response_model=AppearanceOut)
