@@ -15,3 +15,10 @@ class AppearanceStatus(str, enum.Enum):
 
 class MatchEventType(str, enum.Enum):
     GOAL = "GOAL"
+
+
+class PlayerPosition(str, enum.Enum):
+    DEF = "DEF"
+    MID = "MID"
+    FWD = "FWD"
+    GK = "GK"

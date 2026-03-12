@@ -13,6 +13,7 @@ depends_on = None
 role_enum = sa.Enum("OWNER", "ADMIN", "MEMBER", name="roleenum")
 appearance_status_enum = sa.Enum("CONFIRMED", "DECLINED", "NO_SHOW", name="appearancestatus")
 match_event_type_enum = sa.Enum("GOAL", name="matcheventtype")
+player_position_enum = sa.Enum("DEF", "MID", "FWD", "GK", name="playerposition", native_enum=False)
 
 
 def upgrade() -> None:
@@ -64,7 +65,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=True),
         sa.Column("name", sa.String(length=120), nullable=False),
         sa.Column("nickname", sa.String(length=80), nullable=True),
-        sa.Column("position", sa.String(length=20), nullable=True),
+        sa.Column("position", player_position_enum, nullable=True),
         sa.Column("skill_rating", sa.Integer(), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
@@ -283,5 +284,6 @@ def downgrade() -> None:
 
     bind = op.get_bind()
     match_event_type_enum.drop(bind, checkfirst=True)
+    player_position_enum.drop(bind, checkfirst=True)
     appearance_status_enum.drop(bind, checkfirst=True)
     role_enum.drop(bind, checkfirst=True)

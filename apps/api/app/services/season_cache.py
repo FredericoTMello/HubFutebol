@@ -1,9 +1,9 @@
 from collections import defaultdict
 
-from fastapi import HTTPException
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from ..exceptions import DomainNotFoundError
 from ..models import (
     Appearance,
     AppearanceStatus,
@@ -40,7 +40,7 @@ RESULT_COUNTER_KEY = {
 def recompute_season_caches(db: Session, season_id: int) -> None:
     season = db.get(Season, season_id)
     if not season:
-        raise HTTPException(status_code=404, detail="Season not found")
+        raise DomainNotFoundError("Season not found")
 
     rule = db.scalar(select(ScoringRule).where(ScoringRule.season_id == season_id))
     scoring = _default_scoring(rule)

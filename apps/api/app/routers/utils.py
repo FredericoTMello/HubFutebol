@@ -16,7 +16,7 @@ def get_matchday_or_404(db: Session, matchday_id: int) -> MatchDay:
 
 
 def _team_player_sort_key(player: TeamPlayerOut) -> tuple[str, int, str]:
-    return (player.position or "ZZZ", -player.skill_rating, player.player_name)
+    return (player.position.value if player.position else "ZZZ", -player.skill_rating, player.player_name)
 
 
 def serialize_matchday(db: Session, matchday: MatchDay) -> MatchDayOut:

@@ -2,6 +2,13 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+import {
+  buildExpiredTokenCookie,
+  buildTokenCookie,
+  getCookieValue,
+  TOKEN_STORAGE_KEY,
+  USER_STORAGE_KEY,
+} from "@/lib/auth-session";
 import type { User } from "@/lib/types";
 
 type AuthContextValue = {
@@ -14,23 +21,21 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_KEY = "hubfutebol_token";
-const USER_KEY = "hubfutebol_user";
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    const storedToken = window.localStorage.getItem(TOKEN_KEY);
-    const storedUser = window.localStorage.getItem(USER_KEY);
+    const storedToken =
+      window.localStorage.getItem(TOKEN_STORAGE_KEY) || getCookieValue(document.cookie, TOKEN_STORAGE_KEY);
+    const storedUser = window.localStorage.getItem(USER_STORAGE_KEY);
     if (storedToken) setToken(storedToken);
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch {
-        window.localStorage.removeItem(USER_KEY);
+        window.localStorage.removeItem(USER_STORAGE_KEY);
       }
     }
     setHydrated(true);
@@ -44,14 +49,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession: (nextToken, nextUser) => {
         setToken(nextToken);
         setUser(nextUser);
-        window.localStorage.setItem(TOKEN_KEY, nextToken);
-        window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+        window.localStorage.setItem(TOKEN_STORAGE_KEY, nextToken);
+        window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
+        document.cookie = buildTokenCookie(nextToken);
       },
       logout: () => {
         setToken(null);
         setUser(null);
-        window.localStorage.removeItem(TOKEN_KEY);
-        window.localStorage.removeItem(USER_KEY);
+        window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+        window.localStorage.removeItem(USER_STORAGE_KEY);
+        document.cookie = buildExpiredTokenCookie();
       }
     }),
     [hydrated, token, user]

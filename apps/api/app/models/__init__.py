@@ -1,4 +1,4 @@
-from .enums import AppearanceStatus, MatchEventType, RoleEnum
+from .enums import AppearanceStatus, MatchEventType, PlayerPosition, RoleEnum
 from .finance import Ledger, LedgerEntry
 from .group import Group, Membership
 from .matchday import Appearance, Match, MatchDay, MatchEvent, Team, TeamPlayer
@@ -19,6 +19,7 @@ __all__ = [
     "MatchEventType",
     "Membership",
     "Player",
+    "PlayerPosition",
     "PlayerSeasonStats",
     "RoleEnum",
     "ScoringRule",

@@ -16,13 +16,22 @@ import { Label } from "@/components/ui/label";
 import { apiFetch, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useGroup, useGroupPlayers } from "@/lib/group-hooks";
-import type { Player } from "@/lib/types";
+import type { Player, PlayerPosition } from "@/lib/types";
+
+const playerPositions = ["DEF", "MID", "FWD", "GK"] as const;
+const playerPositionSchema = z.enum(playerPositions);
+const positionLabel: Record<PlayerPosition, string> = {
+  DEF: "Defesa",
+  MID: "Meio",
+  FWD: "Ataque",
+  GK: "Goleiro",
+};
 
 const playerSchema = z.object({
   name: z.string().min(2, "Nome muito curto"),
   nickname: z.string().optional(),
-  position: z.string().optional(),
-  skill_rating: z.coerce.number().int().min(1).max(10)
+  position: z.union([playerPositionSchema, z.literal("")]).optional(),
+  skill_rating: z.coerce.number().int().min(1).max(10),
 });
 
 type PlayerForm = z.output<typeof playerSchema>;
@@ -37,7 +46,7 @@ export default function PlayersPage() {
 
   const form = useForm<PlayerFormInput, unknown, PlayerForm>({
     resolver: zodResolver(playerSchema),
-    defaultValues: { name: "", nickname: "", position: "", skill_rating: 5 }
+    defaultValues: { name: "", nickname: "", position: "", skill_rating: 5 },
   });
 
   const createPlayer = useMutation({
@@ -47,14 +56,14 @@ export default function PlayersPage() {
         body: {
           ...values,
           nickname: values.nickname || null,
-          position: values.position || null
+          position: values.position || null,
         },
-        token
+        token,
       }),
     onSuccess: async () => {
       form.reset({ name: "", nickname: "", position: "", skill_rating: 5 });
       await queryClient.invalidateQueries({ queryKey: ["group", groupId, "players"] });
-    }
+    },
   });
 
   const toggleActive = useMutation({
@@ -62,11 +71,11 @@ export default function PlayersPage() {
       apiFetch<Player>(`/players/${payload.playerId}`, {
         method: "PATCH",
         body: { is_active: payload.is_active },
-        token
+        token,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["group", groupId, "players"] });
-    }
+    },
   });
 
   if (groupQuery.isLoading || playersQuery.isLoading) {
@@ -107,7 +116,7 @@ export default function PlayersPage() {
                     {!player.is_active && <span className="text-xs text-slate-500">(inativo)</span>}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {player.position || "SEM POSICAO"} · Forca {player.skill_rating}
+                    {player.position ? positionLabel[player.position] : "SEM POSICAO"} · Forca {player.skill_rating}
                     {player.user_id === user?.id ? " · vinculado a voce" : ""}
                   </p>
                 </div>
@@ -149,7 +158,17 @@ export default function PlayersPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="position">Posicao</Label>
-                  <Input id="position" placeholder="DEF/MID/FWD" {...form.register("position")} />
+                  <select
+                    id="position"
+                    className="h-11 rounded-xl border border-slate-300 bg-white px-3 text-sm"
+                    {...form.register("position")}
+                  >
+                    <option value="">Sem posicao</option>
+                    <option value="DEF">Defesa</option>
+                    <option value="MID">Meio</option>
+                    <option value="FWD">Ataque</option>
+                    <option value="GK">Goleiro</option>
+                  </select>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="skill_rating">Forca (1-10)</Label>

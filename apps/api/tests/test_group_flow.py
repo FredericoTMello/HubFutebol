@@ -48,3 +48,21 @@ def test_owner_can_create_group_player_and_season(client: TestClient) -> None:
     assert paginated_players_response.headers["X-Limit"] == "2"
     assert paginated_players_response.headers["X-Offset"] == "1"
     assert [item["name"] for item in paginated_players_response.json()] == ["Carlos", "Joao"]
+
+    versioned_group_response = client.get(f"/v1/groups/{group['id']}", headers=auth_headers(token))
+    assert versioned_group_response.status_code == 200
+    assert versioned_group_response.json()["id"] == group["id"]
+
+
+def test_player_position_rejects_invalid_values(client: TestClient) -> None:
+    owner = register_user(client, name="Owner", email="owner+position@example.com")
+    token = owner["access_token"]
+    group = create_group(client, token)
+
+    player_response = client.post(
+        f"/groups/{group['id']}/players",
+        json={"name": "Jogador", "position": "WING", "skill_rating": 7},
+        headers=auth_headers(token),
+    )
+
+    assert player_response.status_code == 422

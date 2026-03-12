@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field
 
-from ..models import AppearanceStatus
+from ..models import AppearanceStatus, PlayerPosition
 
 
 class MatchDayCreate(BaseModel):
@@ -25,7 +25,7 @@ class AppearanceOut(BaseModel):
 class TeamPlayerOut(BaseModel):
     player_id: int
     player_name: str
-    position: str | None
+    position: PlayerPosition | None
     skill_rating: int
 
 

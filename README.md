@@ -18,14 +18,15 @@ HubFutebol e um MVP mobile-first para organizar peladas e microcampeonatos em gr
 |-- apps/
 |   |-- api/
 |   `-- web/
+|-- docs/
+|   |-- instrucao2.md
+|   `-- instrucoes.md
 |-- infra/
 |   `-- nginx/
 |-- docker-compose.yml
 |-- README.md
 |-- README_OPERACIONAL.md
-|-- FUNCIONALIDADES.md
-|-- instrucao2.md
-`-- instrucoes.md
+`-- FUNCIONALIDADES.md
 ```
 
 ## Documentacao
@@ -33,8 +34,8 @@ HubFutebol e um MVP mobile-first para organizar peladas e microcampeonatos em gr
 - `README.md`: visao geral, setup e fluxo de uso do repositorio
 - `README_OPERACIONAL.md`: runbook enxuto para a instancia em producao
 - `FUNCIONALIDADES.md`: regras de negocio, telas e limites atuais do MVP
-- `instrucao2.md`: guia interno atual para evolucao tecnica do projeto
-- `instrucoes.md`: briefing inicial que originou o MVP; manter apenas como historico
+- `docs/instrucao2.md`: guia interno atual para evolucao tecnica do projeto
+- `docs/instrucoes.md`: briefing inicial que originou o MVP; manter apenas como historico
 
 ## Rodar com Docker
 
@@ -137,6 +138,8 @@ Credenciais demo:
 - Codigo de convite: `demo123`
 
 ## API principal
+
+Alias versionado disponivel: os mesmos endpoints abaixo tambem respondem sob `/v1/...` para novos clientes, mantendo compatibilidade com as rotas atuais.
 
 - `POST /auth/register`
 - `POST /auth/login`

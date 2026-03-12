@@ -7,7 +7,7 @@ Nao use este documento como fonte da verdade para o estado atual do produto. Par
 1. `README.md`
 2. `FUNCIONALIDADES.md`
 3. `README_OPERACIONAL.md`
-4. `instrucao2.md`
+4. `docs/instrucao2.md`
 
 ## Resumo do briefing original
 

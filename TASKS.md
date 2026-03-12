@@ -1,37 +1,46 @@
 # TASKS
 
-## Status de Execucao - 2026-03-11
+## Status de Execucao - 2026-03-12
 
 - Alta prioridade concluida e validada nesta branch local.
 - Media prioridade concluida e validada nesta branch local.
+- Baixa prioridade concluida e validada nesta branch local.
 - Backend:
   - `apps/api/app/models.py` foi dividido em `apps/api/app/models/`
   - `apps/api/app/schemas.py` foi dividido em `apps/api/app/schemas/`
   - `apps/api/app/services.py` foi dividido em `apps/api/app/services/`
   - imports inline removidos em `routers/matchdays.py`, `routers/finance.py` e no fluxo de ledger
-  - `apps/api/alembic/versions/0001_initial.py` reescrita com `op.create_table(...)`
-  - suite inicial de `pytest` criada e validada
-  - prefixes internos dos routers foram padronizados sem mudar os endpoints publicos consumidos pelo frontend
+  - `apps/api/alembic/versions/0001_initial.py` foi reescrita com operacoes explicitas
+  - prefixes internos dos routers foram padronizados sem mudar os endpoints publicos
   - `serialize_matchday` agora devolve `MatchDayOut` tipado com submodels
-  - paginação por `limit` e `offset` foi adicionada em `list_players`, `list_matchdays`, `season_standings`, `player_stats` e `get_ledger`
+  - paginacao por `limit` e `offset` foi adicionada em `list_players`, `list_matchdays`, `season_standings`, `player_stats` e `get_ledger`
+  - `Player.position` agora usa enum controlado (`DEF`, `MID`, `FWD`, `GK`) com constraint de banco
+  - aliases versionados `/v1/...` foram adicionados sem remover as rotas atuais
+  - services principais agora usam excecoes de dominio em `apps/api/app/exceptions.py`
   - configuracao de lint/format Python adicionada com `apps/api/pyproject.toml` + Ruff
 - Repositorio:
   - `.gitignore` atualizado para ignorar `*.db` e `.run/`
   - `apps/api/hubfutebol.db` e `.run/*` removidos do tracking com `git rm --cached`
   - `pnpm-lock.yaml` voltou para o versionamento
+  - arquivos de instrucao historicos foram movidos da raiz para `docs/`
+  - `docker-compose.yml` foi simplificado removendo `version: "3.9"`
 - Frontend:
   - suite inicial com Vitest + Testing Library criada e validada
   - `admin/page.tsx` foi quebrada em componentes por fluxo
   - `round/page.tsx` foi quebrada em componentes por fluxo
   - `loading/error/empty` agora usam estado compartilhado no frontend
   - `apps/web/components/` foi consolidado em `components/app/` e `components/ui/`
+  - Error Boundary raiz foi adicionado em `apps/web/app/`
+  - `apps/web/middleware.ts` protege `/join` e `/g/*` no servidor usando cookie de sessao auxiliar
+  - ESLint foi configurado no frontend com regras mais estritas
   - `apps/web` continua compativel com os mesmos paths publicos da API
 - Validacao executada:
-  - `apps/api`: `.venv\\Scripts\\python -m pytest -q` -> `5 passed`
-  - `apps/api`: `.venv\\Scripts\\python -m ruff check --fix .` -> ok
-  - `apps/api`: `.venv\\Scripts\\python -m ruff format .` -> ok
+  - `apps/api`: `.venv\\Scripts\\python -m pytest -q` -> `7 passed`
+  - `apps/api`: `.venv\\Scripts\\python -m ruff check .` -> ok
+  - `apps/web`: `corepack pnpm lint` -> ok
   - `apps/web`: `corepack pnpm exec tsc -p tsconfig.json --noEmit` -> ok
   - `apps/web`: `corepack pnpm test` -> `8 passed`
+  - `apps/web`: `corepack pnpm build` -> ok
 
 ## Alta Prioridade
 
@@ -59,12 +68,12 @@
 
 ## Baixa Prioridade / Melhorias Futuras
 
-- [ ] Remover arquivos temporarios de instrucao da raiz (`instrucoes.md`, `instrucao2.md`) ou move-los para `docs/`
-- [ ] Substituir campo livre `position: str` em `Player` por um Enum (`DEF`, `MID`, `FWD`, `GK`)
-- [ ] Remover `version: "3.9"` de `docker-compose.yml`
-- [ ] Adicionar Error Boundary no frontend (`apps/web/app/`)
-- [ ] Adicionar versionamento na API (`/v1/auth/...`, `/v1/groups/...`)
-- [ ] Configurar ESLint com regras mais estritas para o frontend (`apps/web/`)
-- [ ] Criar `apps/api/app/exceptions.py` com excecoes de dominio customizadas em vez de usar `HTTPException` diretamente nos services
-- [ ] Adicionar `apps/web/middleware.ts` para protecao de rotas server-side em vez de depender apenas do `AuthGate` client-side
+- [x] Remover arquivos temporarios de instrucao da raiz (`instrucoes.md`, `instrucao2.md`) ou move-los para `docs/`
+- [x] Substituir campo livre `position: str` em `Player` por um Enum (`DEF`, `MID`, `FWD`, `GK`)
+- [x] Remover `version: "3.9"` de `docker-compose.yml`
+- [x] Adicionar Error Boundary no frontend (`apps/web/app/`)
+- [x] Adicionar versionamento na API (`/v1/auth/...`, `/v1/groups/...`)
+- [x] Configurar ESLint com regras mais estritas para o frontend (`apps/web/`)
+- [x] Criar `apps/api/app/exceptions.py` com excecoes de dominio customizadas em vez de usar `HTTPException` diretamente nos services
+- [x] Adicionar `apps/web/middleware.ts` para protecao de rotas server-side em vez de depender apenas do `AuthGate` client-side
 - [x] Tipar o retorno de `apps/api/app/routers/utils.py:serialize_matchday`

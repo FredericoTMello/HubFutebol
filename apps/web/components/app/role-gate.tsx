@@ -15,7 +15,7 @@ export function RoleGate({
   requireAdmin?: boolean;
   children: React.ReactNode;
 }) {
-  if (!group || !userId) return <>{children}</>;
+  if (!group || !userId) return children;
   const membership = group.memberships.find((m) => m.user_id === userId);
   if (!membership) {
     return <div className="rounded-xl bg-white p-4 text-sm text-danger">Voce nao faz parte deste grupo.</div>;
@@ -23,5 +23,5 @@ export function RoleGate({
   if (requireAdmin && !adminRoles.includes(membership.role)) {
     return <div className="rounded-xl bg-white p-4 text-sm text-danger">Area restrita a admin/owner.</div>;
   }
-  return <>{children}</>;
+  return children;
 }

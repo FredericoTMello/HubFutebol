@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.models import MatchDay
+from app.models import MatchDay, TeamPlayer
 from app.routers.utils import serialize_matchday
 from app.schemas import MatchDayOut
 
@@ -57,7 +57,7 @@ def test_serialize_matchday_returns_matchday_schema(client: TestClient, db_sessi
     assert serialized.matches == []
 
 
-def test_matchday_result_recomputes_standings_and_stats(client: TestClient) -> None:
+def test_matchday_result_recomputes_standings_and_stats(client: TestClient, db_session) -> None:
     owner = register_user(client, name="Owner", email="owner@example.com")
     token = owner["access_token"]
     group = create_group(client, token)
@@ -102,6 +102,9 @@ def test_matchday_result_recomputes_standings_and_stats(client: TestClient) -> N
     assert lock_data["locked"] is True
     assert len(lock_data["teams"]) == 2
     assert all(team["players"] for team in lock_data["teams"])
+    persisted_slots = db_session.query(TeamPlayer.position_slot).all()
+    assert persisted_slots
+    assert {slot for (slot,) in persisted_slots} <= {"DEF", "MID", "FWD", "GK", None}
 
     home_team = lock_data["teams"][0]
     away_team = lock_data["teams"][1]

@@ -2,24 +2,24 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from fastapi import HTTPException
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from ..models import Appearance, AppearanceStatus, Match, MatchDay, Player, Team, TeamPlayer
+from ..exceptions import DomainValidationError
+from ..models import Appearance, AppearanceStatus, Match, MatchDay, Player, PlayerPosition, Team, TeamPlayer
 
 
 @dataclass
 class TeamDraftPlayer:
     id: int
     name: str
-    position: str | None
+    position: PlayerPosition | None
     skill_rating: int
 
 
 def generate_balanced_teams(db: Session, matchday: MatchDay) -> tuple[list[dict], Match | None]:
     if matchday.is_locked:
-        raise HTTPException(status_code=400, detail="MatchDay already locked")
+        raise DomainValidationError("MatchDay already locked")
 
     players = db.execute(
         select(Player, Appearance)
@@ -33,11 +33,11 @@ def generate_balanced_teams(db: Session, matchday: MatchDay) -> tuple[list[dict]
     ).all()
 
     if len(players) < 2:
-        raise HTTPException(status_code=400, detail="Need at least 2 confirmed players")
+        raise DomainValidationError("Need at least 2 confirmed players")
 
     by_position: dict[str, list[TeamDraftPlayer]] = defaultdict(list)
     for player, _ in players:
-        bucket = (player.position or "ANY").upper()
+        bucket = player.position.value if player.position else "ANY"
         by_position[bucket].append(
             TeamDraftPlayer(
                 id=player.id,
@@ -81,7 +81,13 @@ def generate_balanced_teams(db: Session, matchday: MatchDay) -> tuple[list[dict]
 
     for team in (team_a, team_b):
         for player in rosters[team.id]:
-            db.add(TeamPlayer(team_id=team.id, player_id=player.id, position_slot=player.position))
+            db.add(
+                TeamPlayer(
+                    team_id=team.id,
+                    player_id=player.id,
+                    position_slot=player.position.value if player.position else None,
+                )
+            )
         team.total_rating = totals[team.id]
 
     match = Match(matchday_id=matchday.id, home_team_id=team_a.id, away_team_id=team_b.id)
@@ -106,7 +112,11 @@ def generate_balanced_teams(db: Session, matchday: MatchDay) -> tuple[list[dict]
                     }
                     for player in sorted(
                         rosters[team.id],
-                        key=lambda item: (item.position or "ZZZ", -item.skill_rating, item.name),
+                        key=lambda item: (
+                            item.position.value if item.position else "ZZZ",
+                            -item.skill_rating,
+                            item.name,
+                        ),
                     )
                 ],
             }

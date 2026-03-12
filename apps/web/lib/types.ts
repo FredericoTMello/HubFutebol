@@ -1,5 +1,6 @@
 export type Role = "OWNER" | "ADMIN" | "MEMBER";
 export type AppearanceStatus = "CONFIRMED" | "DECLINED" | "NO_SHOW";
+export type PlayerPosition = "DEF" | "MID" | "FWD" | "GK";
 
 export type User = {
   id: number;
@@ -35,7 +36,7 @@ export type Player = {
   user_id?: number | null;
   name: string;
   nickname?: string | null;
-  position?: string | null;
+  position?: PlayerPosition | null;
   skill_rating: number;
   is_active: boolean;
 };
@@ -64,7 +65,7 @@ export type MatchDay = {
     players: Array<{
       player_id: number;
       player_name: string;
-      position?: string | null;
+      position?: PlayerPosition | null;
       skill_rating: number;
     }>;
   }>;

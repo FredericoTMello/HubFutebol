@@ -13,7 +13,7 @@ Use nesta ordem:
 1. `README.md`
 2. `FUNCIONALIDADES.md`
 3. `README_OPERACIONAL.md`
-4. `instrucoes.md` apenas como historico
+4. `docs/instrucoes.md` apenas como historico
 
 ## Prioridades
 
